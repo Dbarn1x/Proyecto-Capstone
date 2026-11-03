@@ -1,13 +1,17 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'comun.dart';
+import 'fotos.dart';
 import 'ubicacion.dart';
 import 'home_screen.dart';
 
+/// Formulario de mascota. Sirve para 3 casos:
+///  · primera mascota al registrarse   (mascota = null, desdeConfiguracion = false)
+///  · agregar otra mascota             (mascota = null, desdeConfiguracion = true)
+///  · editar una mascota existente     (mascota = sus datos)
 class PetProfileSetupScreen extends StatefulWidget {
-  const PetProfileSetupScreen({super.key});
+  final Map<String, dynamic>? mascota;
+  final bool desdeConfiguracion;
+  const PetProfileSetupScreen({super.key, this.mascota, this.desdeConfiguracion = false});
 
   @override
   State<PetProfileSetupScreen> createState() => _PetProfileSetupScreenState();
@@ -17,7 +21,6 @@ class _PetProfileSetupScreenState extends State<PetProfileSetupScreen> {
   final _nombre = TextEditingController();
   final _descripcion = TextEditingController();
 
-  // Catálogos que vienen de la base de datos
   List<Map<String, dynamic>> _especies = [];
   List<Map<String, dynamic>> _razas = [];
 
@@ -27,10 +30,15 @@ class _PetProfileSetupScreenState extends State<PetProfileSetupScreen> {
   double _tamano = 3;   // 1 mini … 5 gigante
   double _energia = 3;  // 1 tranquilo … 5 hiperactivo
   DateTime? _nacimiento;
-  final List<Uint8List> _fotos = [];      // hasta 3 fotos de la mascota
-  final List<Uint8List> _fotosDueno = []; // hasta 3 fotos del dueño
-  Uint8List? _fotoJuntos;                 // 1 foto del dueño con su mascota
+
+  final List<Foto> _fotos = [];       // hasta 3 fotos de la mascota
+  final List<Foto> _fotosDueno = [];  // hasta 3 fotos del dueño (solo si aún no tiene)
+  Foto? _fotoJuntos;                  // dueño + mascota
+  bool _pedirFotosDueno = false;
+  bool _cargando = true;
   bool _guardando = false;
+
+  bool get _editando => widget.mascota != null;
 
   static const _nombresTamano = ['Mini', 'Pequeño', 'Mediano', 'Grande', 'Gigante'];
   static const _nombresEnergia = ['Muy tranquilo', 'Tranquilo', 'Normal', 'Activo', 'Hiperactivo'];
@@ -38,29 +46,36 @@ class _PetProfileSetupScreenState extends State<PetProfileSetupScreen> {
   @override
   void initState() {
     super.initState();
-    _cargarCatalogos();
+    _cargar();
   }
 
-  Future<void> _cargarCatalogos() async {
+  Future<void> _cargar() async {
     final especies = await supabase.from('especies').select().order('id');
     final razas = await supabase.from('razas').select().order('nombre');
+    final perfil = await supabase.from('perfiles').select('fotos').eq('id', miId).single();
+
+    // Si estamos editando, se rellenan los campos con los datos actuales
+    final m = widget.mascota;
+    if (m != null) {
+      _nombre.text = m['nombre'] ?? '';
+      _descripcion.text = m['descripcion'] ?? '';
+      _especieId = m['especie_id'] as int?;
+      _razaId = m['raza_id'] as int?;
+      _sexo = m['sexo'] as String;
+      _tamano = (m['tamano'] as int).toDouble();
+      _energia = (m['energia'] as int).toDouble();
+      if (m['fecha_nacimiento'] != null) _nacimiento = DateTime.parse(m['fecha_nacimiento'] as String);
+      _fotos.addAll((m['fotos'] as List).map((u) => Foto.url(u as String)));
+      if (m['foto_con_dueno'] != null) _fotoJuntos = Foto.url(m['foto_con_dueno'] as String);
+    }
+
+    if (!mounted) return;
     setState(() {
       _especies = especies;
       _razas = razas;
+      _pedirFotosDueno = (perfil['fotos'] as List).isEmpty;
+      _cargando = false;
     });
-  }
-
-  Future<Uint8List?> _elegirFoto() async {
-    final archivo = await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 1080, imageQuality: 75);
-    if (archivo == null) return null;
-    return await archivo.readAsBytes();
-  }
-
-  Future<String> _subirFoto(Uint8List bytes, String nombre) async {
-    // Cada usuario sube solo a su carpeta: fotos/<su id>/... (regla de Storage)
-    final ruta = '$miId/${nombre}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-    await supabase.storage.from('fotos').uploadBinary(ruta, bytes, fileOptions: const FileOptions(contentType: 'image/jpeg'));
-    return supabase.storage.from('fotos').getPublicUrl(ruta);
   }
 
   Future<void> _elegirFecha() async {
@@ -83,30 +98,23 @@ class _PetProfileSetupScreenState extends State<PetProfileSetupScreen> {
       mostrarMensaje(context, 'Sube al menos 1 foto de tu mascota', error: true);
       return;
     }
-    if (_fotosDueno.isEmpty || _fotoJuntos == null) {
+    if ((_pedirFotosDueno && _fotosDueno.isEmpty) || _fotoJuntos == null) {
       mostrarMensaje(context, 'Por seguridad, sube una foto tuya y una foto junto a tu mascota', error: true);
       return;
     }
     setState(() => _guardando = true);
 
     try {
-      // 1. Subir las fotos a Supabase Storage
-      final urls = <String>[];
-      for (int i = 0; i < _fotos.length; i++) {
-        urls.add(await _subirFoto(_fotos[i], 'mascota_$i'));
+      // 1. Fotos: se suben solo las nuevas, las que ya estaban se mantienen
+      final urls = await guardarFotos(_fotos, 'mascota');
+      final urlJuntos = _fotoJuntos!.url ?? await subirFoto(_fotoJuntos!.bytes!, 'juntos');
+      if (_pedirFotosDueno) {
+        final urlsDueno = await guardarFotos(_fotosDueno, 'dueno');
+        await supabase.from('perfiles').update({'fotos': urlsDueno}).eq('id', miId);
       }
-      final urlsDueno = <String>[];
-      for (int i = 0; i < _fotosDueno.length; i++) {
-        urlsDueno.add(await _subirFoto(_fotosDueno[i], 'dueno_$i'));
-      }
-      final urlJuntos = await _subirFoto(_fotoJuntos!, 'juntos');
 
-      // Las fotos del dueño van en su perfil (verificación de identidad)
-      await supabase.from('perfiles').update({'fotos': urlsDueno}).eq('id', miId);
-
-      // 2. Guardar la mascota en la tabla mascotas
-      await supabase.from('mascotas').insert({
-        'dueno_id': miId,
+      // 2. Datos de la mascota
+      final datos = {
         'nombre': _nombre.text.trim(),
         'especie_id': _especieId,
         'raza_id': _razaId,
@@ -117,14 +125,22 @@ class _PetProfileSetupScreenState extends State<PetProfileSetupScreen> {
         'descripcion': _descripcion.text.trim(),
         'fotos': urls,
         'foto_con_dueno': urlJuntos,
-      });
+      };
+      if (_editando) {
+        await supabase.from('mascotas').update(datos).eq('id', widget.mascota!['id']);
+      } else {
+        await supabase.from('mascotas').insert({...datos, 'dueno_id': miId});
+      }
 
-      // 3. Guardar mi ubicación para calcular distancias (PostGIS)
-      await guardarMiUbicacion();
+      if (!widget.desdeConfiguracion) await guardarMiUbicacion();
 
       if (!mounted) return;
-      mostrarMensaje(context, '¡Perfil de ${_nombre.text.trim()} guardado! 🐾');
-      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const HomeScreen()), (_) => false);
+      mostrarMensaje(context, _editando ? 'Cambios guardados ✅' : '¡Perfil de ${_nombre.text.trim()} guardado! 🐾');
+      if (widget.desdeConfiguracion || _editando) {
+        Navigator.pop(context, true);
+      } else {
+        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const HomeScreen()), (_) => false);
+      }
     } catch (e) {
       if (mounted) mostrarMensaje(context, 'No se pudo guardar: $e', error: true);
     } finally {
@@ -132,64 +148,58 @@ class _PetProfileSetupScreenState extends State<PetProfileSetupScreen> {
     }
   }
 
-  /// 3 casilleros de foto: tocar uno vacío agrega, tocar uno con foto la quita
-  Widget _filaFotos(List<Uint8List> lista) {
-    return Row(
-      children: List.generate(3, (i) {
-        final tieneFoto = i < lista.length;
-        return Expanded(
-          child: GestureDetector(
-            onTap: () async {
-              if (tieneFoto) {
-                setState(() => lista.removeAt(i));
-              } else if (lista.length < 3) {
-                final f = await _elegirFoto();
-                if (f != null) setState(() => lista.add(f));
-              }
-            },
-            child: Container(
-              height: 110,
-              margin: EdgeInsets.only(right: i < 2 ? 10 : 0),
-              decoration: BoxDecoration(
-                color: Colores.tarjeta,
-                borderRadius: BorderRadius.circular(15),
-                border: Border.all(color: Colores.morado),
-                image: tieneFoto ? DecorationImage(image: MemoryImage(lista[i]), fit: BoxFit.cover) : null,
-              ),
-              child: tieneFoto
-                  ? const Align(
-                      alignment: Alignment.topRight,
-                      child: Padding(
-                        padding: EdgeInsets.all(4),
-                        child: CircleAvatar(
-                            radius: 12, backgroundColor: Colors.black54, child: Icon(Icons.close, size: 14, color: Colors.white)),
-                      ))
-                  : const Icon(Icons.add_a_photo, color: Colores.rosa),
-            ),
+  Future<void> _eliminar() async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: Colores.tarjeta,
+        title: Text('¿Eliminar a ${widget.mascota!['nombre']}?'),
+        content: const Text('Se borrarán también sus likes, matches e inscripciones a juntas. No se puede deshacer.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Eliminar', style: TextStyle(color: Colors.redAccent)),
           ),
-        );
-      }),
+        ],
+      ),
     );
+    if (confirmar != true) return;
+    await supabase.from('mascotas').delete().eq('id', widget.mascota!['id']);
+    if (mounted) Navigator.pop(context, true);
   }
 
   @override
   Widget build(BuildContext context) {
+    final titulo = _editando
+        ? 'Editar a ${widget.mascota!['nombre']}'
+        : (widget.desdeConfiguracion ? 'Nueva mascota' : 'Perfil de tu peludo');
+
+    if (_cargando) {
+      return Scaffold(
+        appBar: AppBar(backgroundColor: Colors.transparent, title: Text(titulo)),
+        body: const Center(child: CircularProgressIndicator(color: Colores.rosa)),
+      );
+    }
     final razasDeEspecie = _razas.where((r) => r['especie_id'] == _especieId).toList();
 
     return Scaffold(
-      appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0, title: const Text('Perfil de tu peludo')),
+      appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0, title: Text(titulo)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Cuéntanos sobre tu mascota para encontrarle los mejores amigos.',
-                style: TextStyle(color: Colors.white70)),
-            const SizedBox(height: 20),
+            if (!_editando)
+              const Padding(
+                padding: EdgeInsets.only(bottom: 20),
+                child: Text('Cuéntanos sobre tu mascota para encontrarle los mejores amigos.',
+                    style: TextStyle(color: Colors.white70)),
+              ),
 
             // ---------- FOTOS ----------
             etiqueta('Fotos de tu mascota (hasta 3)'),
-            _filaFotos(_fotos),
+            SelectorFotos(fotos: _fotos, alCambiar: () => setState(() {})),
             const SizedBox(height: 20),
 
             // Seguridad: RUT + fotos del dueño + foto juntos ayudan a prevenir robos
@@ -213,32 +223,16 @@ class _PetProfileSetupScreenState extends State<PetProfileSetupScreen> {
               ]),
             ),
             const SizedBox(height: 16),
-            etiqueta('Tus fotos (hasta 3)'),
-            _filaFotos(_fotosDueno),
-            const SizedBox(height: 16),
+            if (_pedirFotosDueno) ...[
+              etiqueta('Tus fotos (hasta 3)'),
+              SelectorFotos(fotos: _fotosDueno, alCambiar: () => setState(() {})),
+              const SizedBox(height: 16),
+            ],
             etiqueta('Foto de ustedes juntos'),
-            GestureDetector(
-              onTap: () async {
-                final f = await _elegirFoto();
-                if (f != null) setState(() => _fotoJuntos = f);
-              },
-              child: Container(
-                height: 140,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colores.tarjeta,
-                  borderRadius: BorderRadius.circular(15),
-                  border: Border.all(color: Colores.morado),
-                  image: _fotoJuntos != null ? DecorationImage(image: MemoryImage(_fotoJuntos!), fit: BoxFit.cover) : null,
-                ),
-                child: _fotoJuntos != null
-                    ? null
-                    : const Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                        Icon(Icons.add_a_photo, color: Colores.rosa, size: 30),
-                        SizedBox(height: 8),
-                        Text('Tú + tu mascota 🐶👤'),
-                      ]),
-              ),
+            SelectorFotoUnica(
+              foto: _fotoJuntos,
+              texto: 'Tú + tu mascota 🐶👤',
+              alElegir: (f) => setState(() => _fotoJuntos = f),
             ),
             const SizedBox(height: 20),
 
@@ -332,11 +326,21 @@ class _PetProfileSetupScreenState extends State<PetProfileSetupScreen> {
             const SizedBox(height: 30),
 
             BotonPrincipal(
-              texto: 'Guardar perfil y buscar amigos',
-              icono: Icons.favorite,
+              texto: _editando ? 'Guardar cambios' : 'Guardar perfil y buscar amigos',
+              icono: _editando ? Icons.check : Icons.favorite,
               cargando: _guardando,
               onPressed: _guardar,
             ),
+            if (_editando) ...[
+              const SizedBox(height: 10),
+              Center(
+                child: TextButton.icon(
+                  onPressed: _eliminar,
+                  icon: const Icon(Icons.delete, color: Colors.redAccent),
+                  label: Text('Eliminar a ${widget.mascota!['nombre']}', style: const TextStyle(color: Colors.redAccent)),
+                ),
+              ),
+            ],
             const SizedBox(height: 40),
           ],
         ),

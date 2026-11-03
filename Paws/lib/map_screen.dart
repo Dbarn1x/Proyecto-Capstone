@@ -683,7 +683,6 @@ class _MapScreenState extends State<MapScreen> {
             _modo = modo;
             _eligiendoPunto = false;
           });
-          if (modo == Modo.veterinarias && _vetsOsm.isEmpty && !_buscandoVets) _buscarVeterinarias(_yo);
         },
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8),

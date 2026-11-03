@@ -16,6 +16,7 @@ dependencies:
   image_picker: ^1.1.2         # elegir fotos de la galería
   url_launcher: ^6.3.0         # abrir WhatsApp y Google Maps
   http: ^1.2.2                 # consultar veterinarias en OpenStreetMap
+  shared_preferences: ^2.3.2   # recordar preferencias en el celular (mascota activa, tema)
   cupertino_icons: ^1.0.8
 
 dev_dependencies:

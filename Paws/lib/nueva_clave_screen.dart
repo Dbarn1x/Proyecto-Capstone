@@ -5,7 +5,9 @@ import 'home_screen.dart';
 
 /// Se abre cuando el usuario llega desde el enlace de "¿Olvidaste tu contraseña?"
 class NuevaClaveScreen extends StatefulWidget {
-  const NuevaClaveScreen({super.key});
+  /// true = se abrió desde Configuración (al guardar, vuelve atrás)
+  final bool desdeConfiguracion;
+  const NuevaClaveScreen({super.key, this.desdeConfiguracion = false});
 
   @override
   State<NuevaClaveScreen> createState() => _NuevaClaveScreenState();
@@ -24,7 +26,11 @@ class _NuevaClaveScreenState extends State<NuevaClaveScreen> {
       await supabase.auth.updateUser(UserAttributes(password: _clave.text));
       if (!mounted) return;
       mostrarMensaje(context, 'Contraseña actualizada 🔒');
-      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const HomeScreen()), (_) => false);
+      if (widget.desdeConfiguracion) {
+        Navigator.pop(context);
+      } else {
+        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const HomeScreen()), (_) => false);
+      }
     } on AuthException catch (e) {
       if (mounted) mostrarMensaje(context, e.message, error: true);
     } finally {
@@ -35,7 +41,7 @@ class _NuevaClaveScreenState extends State<NuevaClaveScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(backgroundColor: Colors.transparent, title: const Text('Nueva contraseña')),
+      appBar: AppBar(backgroundColor: Colors.transparent, title: Text(widget.desdeConfiguracion ? 'Cambiar contraseña' : 'Nueva contraseña')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Form(
