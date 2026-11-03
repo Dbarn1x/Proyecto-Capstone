@@ -29,7 +29,7 @@ class _NuevaClaveScreenState extends State<NuevaClaveScreen> {
       if (widget.desdeConfiguracion) {
         Navigator.pop(context);
       } else {
-        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const HomeScreen()), (_) => false);
+        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => HomeScreen()), (_) => false);
       }
     } on AuthException catch (e) {
       if (mounted) mostrarMensaje(context, e.message, error: true);
@@ -43,12 +43,12 @@ class _NuevaClaveScreenState extends State<NuevaClaveScreen> {
     return Scaffold(
       appBar: AppBar(backgroundColor: Colors.transparent, title: Text(widget.desdeConfiguracion ? 'Cambiar contraseña' : 'Nueva contraseña')),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.all(20),
         child: Form(
           key: _form,
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Text('Crea una contraseña nueva de al menos 12 caracteres.', style: TextStyle(color: Colors.white70)),
-            const SizedBox(height: 20),
+            Text('Crea una contraseña nueva de al menos 12 caracteres.', style: TextStyle(color: Colores.texto70)),
+            SizedBox(height: 20),
             etiqueta('Nueva contraseña'),
             TextFormField(
               controller: _clave,
@@ -56,7 +56,7 @@ class _NuevaClaveScreenState extends State<NuevaClaveScreen> {
               decoration: decoracionCampo('Mínimo 12 caracteres', icono: Icons.lock_outline),
               validator: validarClave,
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             etiqueta('Confirmar contraseña'),
             TextFormField(
               controller: _confirmar,
@@ -64,7 +64,7 @@ class _NuevaClaveScreenState extends State<NuevaClaveScreen> {
               decoration: decoracionCampo('Repite la contraseña', icono: Icons.lock_outline),
               validator: (v) => v == _clave.text ? null : 'Las contraseñas no coinciden',
             ),
-            const SizedBox(height: 30),
+            SizedBox(height: 30),
             BotonPrincipal(texto: 'Guardar contraseña', icono: Icons.check, cargando: _guardando, onPressed: _guardar),
           ]),
         ),

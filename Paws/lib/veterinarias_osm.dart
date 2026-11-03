@@ -35,7 +35,7 @@ class VeterinariaOsm {
     if (!tieneHorario) return null;
     final ahora = DateTime.now();
     final minutos = ahora.hour * 60 + ahora.minute;
-    for (final tramo in tramos[ahora.weekday] ?? const <String>[]) {
+    for (final tramo in tramos[ahora.weekday] ?? <String>[]) {
       final partes = tramo.split('-');
       final abre = _aMinutos(partes[0]);
       var cierra = _aMinutos(partes[1]);
@@ -68,7 +68,7 @@ final Map<String, List<VeterinariaOsm>> _cache = {};
 /// Consulta UN servidor; devuelve null si falla, se demora o está saturado
 Future<Map<String, dynamic>?> _consultar(String servidor, String consulta) async {
   try {
-    final r = await http.post(Uri.parse(servidor), body: {'data': consulta}).timeout(const Duration(seconds: 15));
+    final r = await http.post(Uri.parse(servidor), body: {'data': consulta}).timeout(Duration(seconds: 15));
     if (r.statusCode != 200) return null;
     final json = jsonDecode(utf8.decode(r.bodyBytes)) as Map<String, dynamic>;
     // Saturado: a veces responde 200 pero con un aviso ("remark") y sin resultados

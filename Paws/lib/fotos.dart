@@ -24,7 +24,7 @@ Future<Uint8List?> elegirFoto() async {
 /// Sube una foto a Storage, dentro de la carpeta del usuario (fotos/<su id>/...)
 Future<String> subirFoto(Uint8List bytes, String nombre) async {
   final ruta = '$miId/${nombre}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-  await supabase.storage.from('fotos').uploadBinary(ruta, bytes, fileOptions: const FileOptions(contentType: 'image/jpeg'));
+  await supabase.storage.from('fotos').uploadBinary(ruta, bytes, fileOptions: FileOptions(contentType: 'image/jpeg'));
   return supabase.storage.from('fotos').getPublicUrl(ruta);
 }
 
@@ -72,14 +72,14 @@ class SelectorFotos extends StatelessWidget {
                 image: tieneFoto ? DecorationImage(image: fotos[i].imagen, fit: BoxFit.cover) : null,
               ),
               child: tieneFoto
-                  ? const Align(
+                  ? Align(
                       alignment: Alignment.topRight,
                       child: Padding(
                         padding: EdgeInsets.all(4),
                         child: CircleAvatar(
                             radius: 12, backgroundColor: Colors.black54, child: Icon(Icons.close, size: 14, color: Colors.white)),
                       ))
-                  : const Icon(Icons.add_a_photo, color: Colores.rosa),
+                  : Icon(Icons.add_a_photo, color: Colores.rosa),
             ),
           ),
         );
@@ -114,8 +114,8 @@ class SelectorFotoUnica extends StatelessWidget {
         child: foto != null
             ? null
             : Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                const Icon(Icons.add_a_photo, color: Colores.rosa, size: 30),
-                const SizedBox(height: 8),
+                Icon(Icons.add_a_photo, color: Colores.rosa, size: 30),
+                SizedBox(height: 8),
                 Text(texto),
               ]),
       ),

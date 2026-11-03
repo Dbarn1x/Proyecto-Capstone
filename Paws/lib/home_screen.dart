@@ -35,7 +35,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!mounted) return;
     if (lista.isEmpty) {
       // Todavía no tiene mascota (o borró todas): la creamos primero
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const PetProfileSetupScreen()));
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => PetProfileSetupScreen()));
       return;
     }
     // Si tiene varias, se usa la que eligió en Configuración (o la primera)
@@ -46,14 +46,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _abrirConfiguracion() async {
-    await Navigator.push(context, MaterialPageRoute(builder: (_) => const ConfiguracionScreen()));
+    await Navigator.push(context, MaterialPageRoute(builder: (_) => ConfiguracionScreen()));
     _cargarMiMascota(); // al volver: pudo cambiar la mascota activa, su foto o su nombre
   }
 
   @override
   Widget build(BuildContext context) {
     if (_miMascota == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator(color: Colores.rosa)));
+      return Scaffold(body: Center(child: CircularProgressIndicator(color: Colores.rosa)));
     }
     final idMascota = _miMascota!['id'] as String;
     final fotos = _miMascota!['fotos'] as List;
@@ -62,9 +62,9 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         backgroundColor: Colores.fondo,
         centerTitle: true,
-        title: Text(_titulos[_pestana], style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(_titulos[_pestana], style: TextStyle(fontWeight: FontWeight.bold)),
         leading: Padding(
-          padding: const EdgeInsets.all(8),
+          padding: EdgeInsets.all(8),
           child: GestureDetector(
             onTap: _abrirConfiguracion,
             child: CircleAvatar(
@@ -75,7 +75,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings, color: Colores.rosa),
+            icon: Icon(Icons.settings, color: Colores.rosa),
             tooltip: 'Configuración',
             onPressed: _abrirConfiguracion,
           ),
@@ -89,7 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
           MatchScreen(key: ValueKey('descubrir_$idMascota'), miMascota: _miMascota!),
           MatchesScreen(key: ValueKey('matches_$idMascota'), miMascotaId: idMascota),
           MapScreen(key: ValueKey('mapa_$idMascota'), miMascotaId: idMascota),
-          const MarketplaceScreen(),
+          MarketplaceScreen(),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -98,8 +98,8 @@ class _HomeScreenState extends State<HomeScreen> {
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colores.tarjeta,
         selectedItemColor: Colores.rosa,
-        unselectedItemColor: Colors.white54,
-        items: const [
+        unselectedItemColor: Colores.texto54,
+        items: [
           BottomNavigationBarItem(icon: Icon(Icons.style), label: 'Descubrir'),
           BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Matches'),
           BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Mapa'),

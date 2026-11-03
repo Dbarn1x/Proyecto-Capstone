@@ -29,7 +29,7 @@ class _LoginScreenState extends State<LoginScreen> {
       await supabase.auth.signInWithPassword(email: _correo.text.trim(), password: _clave.text);
       if (!mounted) return;
       Navigator.pushAndRemoveUntil(
-          context, MaterialPageRoute(builder: (_) => const HomeScreen()), (_) => false);
+          context, MaterialPageRoute(builder: (_) => HomeScreen()), (_) => false);
     } on AuthException catch (e) {
       String texto = e.message;
       if (texto.contains('Invalid login')) texto = 'Correo o contraseña incorrectos';
@@ -50,11 +50,11 @@ class _LoginScreenState extends State<LoginScreen> {
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: Colores.tarjeta,
-        title: const Text('Recuperar contraseña'),
+        title: Text('Recuperar contraseña'),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Text('Te enviaremos un enlace a tu correo para crear una contraseña nueva.',
-              style: TextStyle(color: Colors.white70)),
-          const SizedBox(height: 15),
+          Text('Te enviaremos un enlace a tu correo para crear una contraseña nueva.',
+              style: TextStyle(color: Colores.texto70)),
+          SizedBox(height: 15),
           TextField(
             controller: correo,
             keyboardType: TextInputType.emailAddress,
@@ -62,10 +62,10 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ]),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Cancelar')),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Enviar enlace', style: TextStyle(color: Colores.rosa)),
+            child: Text('Enviar enlace', style: TextStyle(color: Colores.rosa)),
           ),
         ],
       ),
@@ -92,22 +92,22 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Hola de nuevo 🐾',
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
-            const SizedBox(height: 10),
-            const Text('Ingresa para ver a tus amigos peludos.', style: TextStyle(color: Colors.white70)),
-            const SizedBox(height: 30),
+            Text('Hola de nuevo 🐾',
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colores.texto)),
+            SizedBox(height: 10),
+            Text('Ingresa para ver a tus amigos peludos.', style: TextStyle(color: Colores.texto70)),
+            SizedBox(height: 30),
             etiqueta('Correo electrónico'),
             TextField(
               controller: _correo,
               keyboardType: TextInputType.emailAddress,
               decoration: decoracionCampo('ejemplo@correo.com', icono: Icons.email_outlined),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             etiqueta('Contraseña'),
             TextField(
               controller: _clave,
@@ -115,7 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
               decoration: decoracionCampo('••••••••',
                   icono: Icons.lock_outline,
                   sufijo: IconButton(
-                    icon: Icon(_verClave ? Icons.visibility : Icons.visibility_off, color: Colors.white30),
+                    icon: Icon(_verClave ? Icons.visibility : Icons.visibility_off, color: Colores.texto30),
                     onPressed: () => setState(() => _verClave = !_verClave),
                   )),
             ),
@@ -123,17 +123,17 @@ class _LoginScreenState extends State<LoginScreen> {
               alignment: Alignment.centerRight,
               child: TextButton(
                 onPressed: _recuperarClave,
-                child: const Text('¿Olvidaste tu contraseña?', style: TextStyle(color: Colores.rosa)),
+                child: Text('¿Olvidaste tu contraseña?', style: TextStyle(color: Colores.rosa)),
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             BotonPrincipal(texto: 'Ingresar', icono: Icons.arrow_forward, cargando: _cargando, onPressed: _ingresar),
-            const SizedBox(height: 15),
+            SizedBox(height: 15),
             Center(
               child: TextButton(
                 onPressed: () => Navigator.pushReplacement(
-                    context, MaterialPageRoute(builder: (_) => const RegisterScreen())),
-                child: const Text('¿No tienes cuenta? Regístrate', style: TextStyle(color: Colores.rosa)),
+                    context, MaterialPageRoute(builder: (_) => RegisterScreen())),
+                child: Text('¿No tienes cuenta? Regístrate', style: TextStyle(color: Colores.rosa)),
               ),
             ),
           ],

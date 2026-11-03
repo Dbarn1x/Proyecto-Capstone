@@ -66,43 +66,43 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(backgroundColor: Colors.transparent, title: const Text('Mi perfil')),
+      appBar: AppBar(backgroundColor: Colors.transparent, title: Text('Mi perfil')),
       body: _cargando
-          ? const Center(child: CircularProgressIndicator(color: Colores.rosa))
+          ? Center(child: CircularProgressIndicator(color: Colores.rosa))
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.all(20),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 etiqueta('Tus fotos (hasta 3)'),
                 SelectorFotos(fotos: _fotos, alCambiar: () => setState(() {})),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
                 etiqueta('Nombre completo'),
                 TextField(controller: _nombre, decoration: decoracionCampo('Ej: Camila Soto', icono: Icons.person_outline)),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 etiqueta('Teléfono (opcional)'),
                 TextField(
                   controller: _telefono,
                   keyboardType: TextInputType.phone,
                   decoration: decoracionCampo('Ej: +56 9 1234 5678', icono: Icons.phone),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 etiqueta('RUT'),
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(16),
+                  padding: EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colores.campo,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colores.morado),
                   ),
                   child: Row(children: [
-                    const Icon(Icons.verified, color: Colors.lightBlueAccent),
-                    const SizedBox(width: 10),
+                    Icon(Icons.verified, color: Colors.lightBlueAccent),
+                    SizedBox(width: 10),
                     Text(_rut),
-                    const Spacer(),
-                    const Text('No se puede cambiar', style: TextStyle(color: Colors.white38, fontSize: 12)),
+                    Spacer(),
+                    Text('No se puede cambiar', style: TextStyle(color: Colores.texto38, fontSize: 12)),
                   ]),
                 ),
-                const SizedBox(height: 30),
+                SizedBox(height: 30),
                 BotonPrincipal(texto: 'Guardar cambios', icono: Icons.check, cargando: _guardando, onPressed: _guardar),
               ]),
             ),

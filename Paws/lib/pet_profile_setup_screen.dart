@@ -81,7 +81,7 @@ class _PetProfileSetupScreenState extends State<PetProfileSetupScreen> {
   Future<void> _elegirFecha() async {
     final fecha = await showDatePicker(
       context: context,
-      initialDate: _nacimiento ?? DateTime.now().subtract(const Duration(days: 365)),
+      initialDate: _nacimiento ?? DateTime.now().subtract(Duration(days: 365)),
       firstDate: DateTime(2000),
       lastDate: DateTime.now(),
       helpText: 'Fecha de nacimiento (aproximada)',
@@ -139,10 +139,12 @@ class _PetProfileSetupScreenState extends State<PetProfileSetupScreen> {
       if (widget.desdeConfiguracion || _editando) {
         Navigator.pop(context, true);
       } else {
-        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const HomeScreen()), (_) => false);
+        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => HomeScreen()), (_) => false);
       }
     } catch (e) {
-      if (mounted) mostrarMensaje(context, 'No se pudo guardar: $e', error: true);
+      // Si la base de datos rechaza la sexta mascota, se muestra un mensaje claro
+      final texto = e.toString().contains('Máximo 5') ? 'Puedes tener máximo 5 mascotas' : 'No se pudo guardar: $e';
+      if (mounted) mostrarMensaje(context, texto, error: true);
     } finally {
       if (mounted) setState(() => _guardando = false);
     }
@@ -154,12 +156,12 @@ class _PetProfileSetupScreenState extends State<PetProfileSetupScreen> {
       builder: (_) => AlertDialog(
         backgroundColor: Colores.tarjeta,
         title: Text('¿Eliminar a ${widget.mascota!['nombre']}?'),
-        content: const Text('Se borrarán también sus likes, matches e inscripciones a juntas. No se puede deshacer.'),
+        content: Text('Se borrarán también sus likes, matches e inscripciones a juntas. No se puede deshacer.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Cancelar')),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Eliminar', style: TextStyle(color: Colors.redAccent)),
+            child: Text('Eliminar', style: TextStyle(color: Colors.redAccent)),
           ),
         ],
       ),
@@ -178,7 +180,7 @@ class _PetProfileSetupScreenState extends State<PetProfileSetupScreen> {
     if (_cargando) {
       return Scaffold(
         appBar: AppBar(backgroundColor: Colors.transparent, title: Text(titulo)),
-        body: const Center(child: CircularProgressIndicator(color: Colores.rosa)),
+        body: Center(child: CircularProgressIndicator(color: Colores.rosa)),
       );
     }
     final razasDeEspecie = _razas.where((r) => r['especie_id'] == _especieId).toList();
@@ -186,31 +188,31 @@ class _PetProfileSetupScreenState extends State<PetProfileSetupScreen> {
     return Scaffold(
       appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0, title: Text(titulo)),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (!_editando)
-              const Padding(
+              Padding(
                 padding: EdgeInsets.only(bottom: 20),
                 child: Text('Cuéntanos sobre tu mascota para encontrarle los mejores amigos.',
-                    style: TextStyle(color: Colors.white70)),
+                    style: TextStyle(color: Colores.texto70)),
               ),
 
             // ---------- FOTOS ----------
             etiqueta('Fotos de tu mascota (hasta 3)'),
             SelectorFotos(fotos: _fotos, alCambiar: () => setState(() {})),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
 
             // Seguridad: RUT + fotos del dueño + foto juntos ayudan a prevenir robos
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: Colores.tarjeta,
                 border: Border.all(color: Colores.rosa),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Row(children: [
+              child: Row(children: [
                 Icon(Icons.verified_user, color: Colores.rosa),
                 SizedBox(width: 10),
                 Expanded(
@@ -222,11 +224,11 @@ class _PetProfileSetupScreenState extends State<PetProfileSetupScreen> {
                 ),
               ]),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             if (_pedirFotosDueno) ...[
               etiqueta('Tus fotos (hasta 3)'),
               SelectorFotos(fotos: _fotosDueno, alCambiar: () => setState(() {})),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
             ],
             etiqueta('Foto de ustedes juntos'),
             SelectorFotoUnica(
@@ -234,12 +236,12 @@ class _PetProfileSetupScreenState extends State<PetProfileSetupScreen> {
               texto: 'Tú + tu mascota 🐶👤',
               alElegir: (f) => setState(() => _fotoJuntos = f),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
 
             // ---------- DATOS ----------
             etiqueta('Nombre'),
             TextField(controller: _nombre, decoration: decoracionCampo('Ej: Akali', icono: Icons.pets)),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
             etiqueta('Especie'),
             DropdownButtonFormField<int>(
@@ -254,7 +256,7 @@ class _PetProfileSetupScreenState extends State<PetProfileSetupScreen> {
                 _razaId = null; // la raza depende de la especie
               }),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
             etiqueta('Raza (opcional)'),
             DropdownButtonFormField<int>(
@@ -267,23 +269,23 @@ class _PetProfileSetupScreenState extends State<PetProfileSetupScreen> {
                   .toList(),
               onChanged: (v) => setState(() => _razaId = v),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
             etiqueta('Sexo'),
             Row(children: [
               ChoiceChip(
-                label: const Text('Hembra'),
+                label: Text('Hembra'),
                 selected: _sexo == 'hembra',
                 onSelected: (_) => setState(() => _sexo = 'hembra'),
               ),
-              const SizedBox(width: 10),
+              SizedBox(width: 10),
               ChoiceChip(
-                label: const Text('Macho'),
+                label: Text('Macho'),
                 selected: _sexo == 'macho',
                 onSelected: (_) => setState(() => _sexo = 'macho'),
               ),
             ]),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
             etiqueta('Tamaño: ${_nombresTamano[_tamano.round() - 1]}'),
             Slider(
@@ -302,20 +304,20 @@ class _PetProfileSetupScreenState extends State<PetProfileSetupScreen> {
             etiqueta('Fecha de nacimiento (opcional)'),
             OutlinedButton.icon(
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Colores.morado),
-                minimumSize: const Size(double.infinity, 50),
+                side: BorderSide(color: Colores.morado),
+                minimumSize: Size(double.infinity, 50),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               onPressed: _elegirFecha,
-              icon: const Icon(Icons.cake, color: Colores.rosa),
+              icon: Icon(Icons.cake, color: Colores.rosa),
               label: Text(
                 _nacimiento == null
                     ? 'Elegir fecha'
                     : '${_nacimiento!.day}/${_nacimiento!.month}/${_nacimiento!.year}',
-                style: const TextStyle(color: Colors.white),
+                style: TextStyle(color: Colores.texto),
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
             etiqueta('Descripción y personalidad'),
             TextField(
@@ -323,7 +325,7 @@ class _PetProfileSetupScreenState extends State<PetProfileSetupScreen> {
               maxLines: 3,
               decoration: decoracionCampo('¿Es tímida, juguetona, le encanta correr?'),
             ),
-            const SizedBox(height: 30),
+            SizedBox(height: 30),
 
             BotonPrincipal(
               texto: _editando ? 'Guardar cambios' : 'Guardar perfil y buscar amigos',
@@ -332,16 +334,16 @@ class _PetProfileSetupScreenState extends State<PetProfileSetupScreen> {
               onPressed: _guardar,
             ),
             if (_editando) ...[
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
               Center(
                 child: TextButton.icon(
                   onPressed: _eliminar,
-                  icon: const Icon(Icons.delete, color: Colors.redAccent),
-                  label: Text('Eliminar a ${widget.mascota!['nombre']}', style: const TextStyle(color: Colors.redAccent)),
+                  icon: Icon(Icons.delete, color: Colors.redAccent),
+                  label: Text('Eliminar a ${widget.mascota!['nombre']}', style: TextStyle(color: Colors.redAccent)),
                 ),
               ),
             ],
-            const SizedBox(height: 40),
+            SizedBox(height: 40),
           ],
         ),
       ),

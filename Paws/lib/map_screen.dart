@@ -168,8 +168,8 @@ class _MapScreenState extends State<MapScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colores.tarjeta,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
-      builder: (_) => Padding(padding: const EdgeInsets.all(20), child: contenido),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
+      builder: (_) => Padding(padding: EdgeInsets.all(20), child: contenido),
     );
   }
 
@@ -210,30 +210,30 @@ class _MapScreenState extends State<MapScreen> {
 
       return Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          const Icon(Icons.groups, color: Colores.morado, size: 30),
-          const SizedBox(width: 10),
-          Expanded(child: Text(e['titulo'] as String, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold))),
+          Icon(Icons.groups, color: Colores.morado, size: 30),
+          SizedBox(width: 10),
+          Expanded(child: Text(e['titulo'] as String, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold))),
         ]),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         Text('📅 ${_fechaHora(e['fecha'] as String)}'),
-        const SizedBox(height: 6),
+        SizedBox(height: 6),
         Text('🐾 $inscritos inscritos${cupo != null ? ' de $cupo cupos' : ''}'),
         if ((e['descripcion'] ?? '').toString().isNotEmpty) ...[
-          const SizedBox(height: 10),
-          Text(e['descripcion'] as String, style: const TextStyle(color: Colors.white70)),
+          SizedBox(height: 10),
+          Text(e['descripcion'] as String, style: TextStyle(color: Colores.texto70)),
         ],
-        const SizedBox(height: 20),
+        SizedBox(height: 20),
         BotonPrincipal(
           texto: participo ? 'Salir de la junta' : 'Me uno con mi mascota',
           icono: participo ? Icons.logout : Icons.pets,
           onPressed: alternar,
         ),
         if (e['creador_id'] == miId) ...[
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           Center(
             child: TextButton.icon(
-              icon: const Icon(Icons.delete, color: Colors.redAccent),
-              label: const Text('Eliminar mi junta', style: TextStyle(color: Colors.redAccent)),
+              icon: Icon(Icons.delete, color: Colors.redAccent),
+              label: Text('Eliminar mi junta', style: TextStyle(color: Colors.redAccent)),
               onPressed: () async {
                 await supabase.from('eventos').delete().eq('id', e['id']);
                 if (context.mounted) Navigator.pop(context);
@@ -269,44 +269,44 @@ class _MapScreenState extends State<MapScreen> {
     _hoja(Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(children: [
         Icon(Icons.local_hospital, color: abierta ? Colors.greenAccent : Colors.grey, size: 30),
-        const SizedBox(width: 10),
-        Expanded(child: Text(v['nombre'] as String, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold))),
+        SizedBox(width: 10),
+        Expanded(child: Text(v['nombre'] as String, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold))),
       ]),
-      const SizedBox(height: 8),
+      SizedBox(height: 8),
       Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
           color: (abierta ? Colors.green : Colors.grey).withOpacity(0.2),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Text(abierta ? 'Abierta ahora' : 'Cerrada ahora',
-            style: TextStyle(color: abierta ? Colors.greenAccent : Colors.white70, fontWeight: FontWeight.bold)),
+            style: TextStyle(color: abierta ? Colors.greenAccent : Colores.texto70, fontWeight: FontWeight.bold)),
       ),
-      if (v['direccion'] != null) ...[const SizedBox(height: 10), Text('📍 ${v['direccion']}')],
-      if (v['telefono'] != null) ...[const SizedBox(height: 6), Text('📞 ${v['telefono']}')],
-      const SizedBox(height: 12),
+      if (v['direccion'] != null) ...[SizedBox(height: 10), Text('📍 ${v['direccion']}')],
+      if (v['telefono'] != null) ...[SizedBox(height: 6), Text('📞 ${v['telefono']}')],
+      SizedBox(height: 12),
       etiqueta('Horario'),
       if (v['es_24_horas'] == true)
-        const Text('Abierta las 24 horas, todos los días')
+        Text('Abierta las 24 horas, todos los días')
       else
         ...ordenSemana.map((d) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 2),
+              padding: EdgeInsets.symmetric(vertical: 2),
               child: Text('${dias[d]}: ${porDia[d]?.join(', ') ?? 'Cerrado'}',
-                  style: const TextStyle(color: Colors.white70)),
+                  style: TextStyle(color: Colores.texto70)),
             )),
       if (v['beneficio'] != null) ...[
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         Container(
-          padding: const EdgeInsets.all(12),
+          padding: EdgeInsets.all(12),
           decoration: BoxDecoration(border: Border.all(color: Colors.amber), borderRadius: BorderRadius.circular(10)),
           child: Row(children: [
-            const Icon(Icons.local_offer, color: Colors.amber),
-            const SizedBox(width: 10),
-            Expanded(child: Text('Beneficio Paws: ${v['beneficio']}', style: const TextStyle(fontWeight: FontWeight.bold))),
+            Icon(Icons.local_offer, color: Colors.amber),
+            SizedBox(width: 10),
+            Expanded(child: Text('Beneficio Paws: ${v['beneficio']}', style: TextStyle(fontWeight: FontWeight.bold))),
           ]),
         ),
       ],
-      const SizedBox(height: 20),
+      SizedBox(height: 20),
       BotonPrincipal(
         texto: 'Cómo llegar',
         icono: Icons.directions,
@@ -326,37 +326,37 @@ class _MapScreenState extends State<MapScreen> {
     _hoja(Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(children: [
         Icon(Icons.local_hospital, color: _colorVet(abierta), size: 30),
-        const SizedBox(width: 10),
-        Expanded(child: Text(v.nombre, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold))),
+        SizedBox(width: 10),
+        Expanded(child: Text(v.nombre, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold))),
       ]),
-      const SizedBox(height: 8),
+      SizedBox(height: 8),
       Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(color: _colorVet(abierta).withOpacity(0.2), borderRadius: BorderRadius.circular(10)),
         child: Text(estado, style: TextStyle(color: _colorVet(abierta), fontWeight: FontWeight.bold)),
       ),
-      const SizedBox(height: 10),
+      SizedBox(height: 10),
       Text('📍 ${v.direccion ?? 'Dirección no informada'}'),
       if (v.telefono != null) ...[
-        const SizedBox(height: 6),
+        SizedBox(height: 6),
         GestureDetector(
           onTap: () => launchUrl(Uri.parse('tel:${v.telefono!.replaceAll(' ', '')}')),
-          child: Text('📞 ${v.telefono}', style: const TextStyle(decoration: TextDecoration.underline)),
+          child: Text('📞 ${v.telefono}', style: TextStyle(decoration: TextDecoration.underline)),
         ),
       ],
-      const SizedBox(height: 12),
+      SizedBox(height: 12),
       etiqueta('Horario'),
       if (horario.isEmpty)
-        const Text('Esta veterinaria no tiene su horario publicado. Te recomendamos llamar antes de ir.',
-            style: TextStyle(color: Colors.white70))
+        Text('Esta veterinaria no tiene su horario publicado. Te recomendamos llamar antes de ir.',
+            style: TextStyle(color: Colores.texto70))
       else
         ...horario.map((linea) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 2),
-              child: Text(linea, style: const TextStyle(color: Colors.white70)),
+              padding: EdgeInsets.symmetric(vertical: 2),
+              child: Text(linea, style: TextStyle(color: Colores.texto70)),
             )),
-      const SizedBox(height: 8),
-      const Text('Datos: © colaboradores de OpenStreetMap', style: TextStyle(color: Colors.white38, fontSize: 11)),
-      const SizedBox(height: 16),
+      SizedBox(height: 8),
+      Text('Datos: © colaboradores de OpenStreetMap', style: TextStyle(color: Colores.texto38, fontSize: 11)),
+      SizedBox(height: 16),
       BotonPrincipal(
         texto: 'Cómo llegar',
         icono: Icons.directions,
@@ -374,27 +374,27 @@ class _MapScreenState extends State<MapScreen> {
     _hoja(Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(children: [
         Icon(_iconoZona(tipo), color: _colorZona(tipo), size: 30),
-        const SizedBox(width: 10),
-        Expanded(child: Text(z['titulo'] as String, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold))),
+        SizedBox(width: 10),
+        Expanded(child: Text(z['titulo'] as String, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold))),
       ]),
-      const SizedBox(height: 8),
+      SizedBox(height: 8),
       Text(_textoZona(tipo), style: TextStyle(color: _colorZona(tipo), fontWeight: FontWeight.bold)),
       if (estrellas != null) ...[
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         Row(children: List.generate(5, (i) => Icon(i < estrellas ? Icons.star : Icons.star_border, color: Colors.amber))),
       ],
       if ((z['comentario'] ?? '').toString().isNotEmpty) ...[
-        const SizedBox(height: 10),
-        Text('"${z['comentario']}"', style: const TextStyle(color: Colors.white70, fontStyle: FontStyle.italic)),
+        SizedBox(height: 10),
+        Text('"${z['comentario']}"', style: TextStyle(color: Colores.texto70, fontStyle: FontStyle.italic)),
       ],
-      const SizedBox(height: 10),
-      Text('Reportado el ${_fechaHora(z['created_at'] as String)}', style: const TextStyle(color: Colors.white38, fontSize: 12)),
+      SizedBox(height: 10),
+      Text('Reportado el ${_fechaHora(z['created_at'] as String)}', style: TextStyle(color: Colores.texto38, fontSize: 12)),
       if (z['autor_id'] == miId) ...[
-        const SizedBox(height: 10),
+        SizedBox(height: 10),
         Center(
           child: TextButton.icon(
-            icon: const Icon(Icons.delete, color: Colors.redAccent),
-            label: const Text('Eliminar mi reporte', style: TextStyle(color: Colors.redAccent)),
+            icon: Icon(Icons.delete, color: Colors.redAccent),
+            label: Text('Eliminar mi reporte', style: TextStyle(color: Colors.redAccent)),
             onPressed: () async {
               await supabase.from('zonas').delete().eq('id', z['id']);
               if (mounted) Navigator.pop(context);
@@ -426,9 +426,9 @@ class _MapScreenState extends State<MapScreen> {
       Future<void> elegirFecha() async {
         final dia = await showDatePicker(
             context: context, initialDate: DateTime.now(), firstDate: DateTime.now(),
-            lastDate: DateTime.now().add(const Duration(days: 180)));
+            lastDate: DateTime.now().add(Duration(days: 180)));
         if (dia == null || !context.mounted) return;
-        final hora = await showTimePicker(context: context, initialTime: const TimeOfDay(hour: 11, minute: 0));
+        final hora = await showTimePicker(context: context, initialTime: TimeOfDay(hour: 11, minute: 0));
         if (hora == null) return;
         actualizar(() => fecha = DateTime(dia.year, dia.month, dia.day, hora.hour, hora.minute));
       }
@@ -467,26 +467,26 @@ class _MapScreenState extends State<MapScreen> {
         padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
         child: SingleChildScrollView(
           child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Text('Nueva junta', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 15),
+            Text('Nueva junta', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            SizedBox(height: 15),
             TextField(controller: titulo, decoration: decoracionCampo('Título, ej: Juntita en el parque', icono: Icons.title)),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             TextField(controller: descripcion, maxLines: 2, decoration: decoracionCampo('Descripción (opcional)')),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             TextField(
                 controller: cupo,
                 keyboardType: TextInputType.number,
                 decoration: decoracionCampo('Cupo máximo (opcional)', icono: Icons.people)),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             OutlinedButton.icon(
               style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colores.morado), minimumSize: const Size(double.infinity, 50)),
+                  side: BorderSide(color: Colores.morado), minimumSize: Size(double.infinity, 50)),
               onPressed: elegirFecha,
-              icon: const Icon(Icons.event, color: Colores.rosa),
+              icon: Icon(Icons.event, color: Colores.rosa),
               label: Text(fecha == null ? 'Elegir fecha y hora' : _fechaHora(fecha!.toIso8601String()),
-                  style: const TextStyle(color: Colors.white)),
+                  style: TextStyle(color: Colores.texto)),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             BotonPrincipal(texto: 'Crear junta', icono: Icons.check, onPressed: crear),
           ]),
         ),
@@ -535,16 +535,16 @@ class _MapScreenState extends State<MapScreen> {
         padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
         child: SingleChildScrollView(
           child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Text('Marcar zona de paseo', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 15),
+            Text('Marcar zona de paseo', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            SizedBox(height: 15),
             Wrap(spacing: 8, children: [
               opcion('recomendada', '🟢 Recomendada'),
               opcion('precaucion', '🟡 Precaución'),
               opcion('evitar', '🔴 Evitar'),
             ]),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             TextField(controller: titulo, decoration: decoracionCampo('Lugar, ej: Parque Forestal', icono: Icons.place)),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             TextField(
                 controller: comentario,
                 maxLines: 2,
@@ -552,7 +552,7 @@ class _MapScreenState extends State<MapScreen> {
                     ? '¿Por qué es bueno? Ej: tranquilo, con agua'
                     : '¿Qué pasa? Ej: perros sueltos, vidrios')),
             if (tipo == 'recomendada') ...[
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
               Row(
                 children: List.generate(
                   5,
@@ -564,12 +564,12 @@ class _MapScreenState extends State<MapScreen> {
               ),
             ],
             if (tipo != 'recomendada')
-              const Padding(
+              Padding(
                 padding: EdgeInsets.only(top: 8),
                 child: Text('Las alertas desaparecen solas a los 30 días.',
-                    style: TextStyle(color: Colors.white38, fontSize: 12)),
+                    style: TextStyle(color: Colores.texto38, fontSize: 12)),
               ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             BotonPrincipal(texto: 'Publicar', icono: Icons.check, onPressed: crear),
           ]),
         ),
@@ -607,7 +607,7 @@ class _MapScreenState extends State<MapScreen> {
           left: 10,
           right: 10,
           child: Container(
-            padding: const EdgeInsets.all(6),
+            padding: EdgeInsets.all(6),
             decoration: BoxDecoration(
               color: Colores.tarjeta.withOpacity(0.95),
               borderRadius: BorderRadius.circular(20),
@@ -625,9 +625,9 @@ class _MapScreenState extends State<MapScreen> {
             top: 80,
             left: 10,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(color: Colores.tarjeta.withOpacity(0.9), borderRadius: BorderRadius.circular(10)),
-              child: const Text('🟢 Abierta   ⚪ Cerrada   🟡 Sin horario   ⭐ Convenio Paws',
+              child: Text('🟢 Abierta   ⚪ Cerrada   🟡 Sin horario   ⭐ Convenio Paws',
                   style: TextStyle(fontSize: 11)),
             ),
           ),
@@ -637,9 +637,9 @@ class _MapScreenState extends State<MapScreen> {
             left: 20,
             right: 20,
             child: Container(
-              padding: const EdgeInsets.all(12),
+              padding: EdgeInsets.all(12),
               decoration: BoxDecoration(color: Colores.rosa, borderRadius: BorderRadius.circular(12)),
-              child: const Text('Toca el mapa donde quieres marcar 📍',
+              child: Text('Toca el mapa donde quieres marcar 📍',
                   textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           ),
@@ -649,18 +649,18 @@ class _MapScreenState extends State<MapScreen> {
           heroTag: 'ubicarme',
           backgroundColor: Colores.tarjeta,
           onPressed: _ubicarme,
-          child: const Icon(Icons.my_location, color: Colors.blueAccent),
+          child: Icon(Icons.my_location, color: Colors.blueAccent),
         ),
-        const SizedBox(height: 10),
+        SizedBox(height: 10),
         if (_modo == Modo.veterinarias)
           FloatingActionButton.extended(
             heroTag: 'buscarVets',
             backgroundColor: Colores.rosa,
             onPressed: _buscandoVets ? null : () => _buscarVeterinarias(_mapa.camera.center),
             icon: _buscandoVets
-                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                : const Icon(Icons.search),
-            label: const Text('Buscar en esta zona'),
+                ? SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                : Icon(Icons.search),
+            label: Text('Buscar en esta zona'),
           ),
         if (puedeCrear)
           FloatingActionButton.extended(
@@ -685,14 +685,14 @@ class _MapScreenState extends State<MapScreen> {
           });
         },
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
             color: activo ? Colores.rosa : Colors.transparent,
             borderRadius: BorderRadius.circular(14),
           ),
           child: Column(children: [
-            Icon(icono, size: 20, color: Colors.white),
-            Text(texto, style: TextStyle(fontSize: 12, fontWeight: activo ? FontWeight.bold : FontWeight.normal)),
+            Icon(icono, size: 20, color: activo ? Colors.white : Colores.texto),
+            Text(texto, style: TextStyle(fontSize: 12, color: activo ? Colors.white : Colores.texto, fontWeight: activo ? FontWeight.bold : FontWeight.normal)),
           ]),
         ),
       ),

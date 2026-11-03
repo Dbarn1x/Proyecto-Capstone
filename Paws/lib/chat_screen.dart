@@ -46,15 +46,15 @@ class _ChatScreenState extends State<ChatScreen> {
           child: StreamBuilder<List<Map<String, dynamic>>>(
             stream: _mensajes,
             builder: (context, snapshot) {
-              if (!snapshot.hasData) return const Center(child: CircularProgressIndicator(color: Colores.rosa));
+              if (!snapshot.hasData) return Center(child: CircularProgressIndicator(color: Colores.rosa));
               final mensajes = snapshot.data!;
               if (mensajes.isEmpty) {
-                return const Center(
-                    child: Text('Saluden y coordinen una salida 🐶', style: TextStyle(color: Colors.white70)));
+                return Center(
+                    child: Text('Saluden y coordinen una salida 🐶', style: TextStyle(color: Colores.texto70)));
               }
               return ListView.builder(
                 reverse: true, // el más nuevo abajo
-                padding: const EdgeInsets.all(12),
+                padding: EdgeInsets.all(12),
                 itemCount: mensajes.length,
                 itemBuilder: (_, i) {
                   final m = mensajes[i];
@@ -62,15 +62,15 @@ class _ChatScreenState extends State<ChatScreen> {
                   return Align(
                     alignment: esMio ? Alignment.centerRight : Alignment.centerLeft,
                     child: Container(
-                      margin: const EdgeInsets.symmetric(vertical: 4),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      margin: EdgeInsets.symmetric(vertical: 4),
+                      padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                       constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
                       decoration: BoxDecoration(
                         color: esMio ? Colores.rosa.withOpacity(0.85) : Colores.tarjeta,
                         borderRadius: BorderRadius.circular(16),
                         border: esMio ? null : Border.all(color: Colores.morado),
                       ),
-                      child: Text(m['texto'] as String, style: const TextStyle(color: Colors.white, fontSize: 15)),
+                      child: Text(m['texto'] as String, style: TextStyle(color: esMio ? Colors.white : Colores.texto, fontSize: 15)),
                     ),
                   );
                 },
@@ -80,7 +80,7 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
         SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(8),
+            padding: EdgeInsets.all(8),
             child: Row(children: [
               Expanded(
                 child: TextField(
@@ -90,10 +90,10 @@ class _ChatScreenState extends State<ChatScreen> {
                   onSubmitted: (_) => _enviar(),
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               CircleAvatar(
                 backgroundColor: Colores.rosa,
-                child: IconButton(icon: const Icon(Icons.send, color: Colors.white), onPressed: _enviar),
+                child: IconButton(icon: Icon(Icons.send, color: Colors.white), onPressed: _enviar),
               ),
             ]),
           ),

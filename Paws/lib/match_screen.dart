@@ -73,7 +73,8 @@ class _MatchScreenState extends State<MatchScreen> {
         if (match != null && mounted) _mostrarMatch(otra);
       }
     } catch (e) {
-      if (mounted) mostrarMensaje(context, 'No se pudo guardar: $e', error: true);
+      final texto = e.toString().contains('propias mascotas') ? 'No puedes hacer match entre tus propias mascotas' : 'No se pudo guardar: $e';
+      if (mounted) mostrarMensaje(context, texto, error: true);
     }
   }
 
@@ -84,20 +85,20 @@ class _MatchScreenState extends State<MatchScreen> {
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: Colores.tarjeta,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: const BorderSide(color: Colores.rosa)),
-        title: const Text('¡Es un match! 🎉', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide(color: Colores.rosa)),
+        title: Text('¡Es un match! 🎉', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
           Row(mainAxisAlignment: MainAxisAlignment.center, children: [
             _avatar(misFotos),
-            const Padding(padding: EdgeInsets.symmetric(horizontal: 10), child: Icon(Icons.favorite, color: Colores.rosa, size: 32)),
+            Padding(padding: EdgeInsets.symmetric(horizontal: 10), child: Icon(Icons.favorite, color: Colores.rosa, size: 32)),
             _avatar(susFotos),
           ]),
-          const SizedBox(height: 15),
+          SizedBox(height: 15),
           Text('${widget.miMascota['nombre']} y ${otra['nombre']} se gustaron. ¡Coordinen una salida en Mis matches!',
               textAlign: TextAlign.center),
         ]),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Seguir buscando', style: TextStyle(color: Colores.rosa))),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text('Seguir buscando', style: TextStyle(color: Colores.rosa))),
         ],
       ),
     );
@@ -107,7 +108,7 @@ class _MatchScreenState extends State<MatchScreen> {
         radius: 38,
         backgroundColor: Colores.fondo,
         backgroundImage: fotos.isNotEmpty ? NetworkImage(fotos.first as String) : null,
-        child: fotos.isEmpty ? const Icon(Icons.pets) : null,
+        child: fotos.isEmpty ? Icon(Icons.pets) : null,
       );
 
   void _abrirFiltros() {
@@ -116,12 +117,12 @@ class _MatchScreenState extends State<MatchScreen> {
       backgroundColor: Colores.tarjeta,
       builder: (_) => StatefulBuilder(
         builder: (context, actualizar) => Padding(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(20),
           child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
             etiqueta('Especie'),
             Wrap(spacing: 8, children: [
               ChoiceChip(
-                label: const Text('Todas'),
+                label: Text('Todas'),
                 selected: _especieFiltro == null,
                 onSelected: (_) => actualizar(() => _especieFiltro = null),
               ),
@@ -131,14 +132,14 @@ class _MatchScreenState extends State<MatchScreen> {
                     onSelected: (_) => actualizar(() => _especieFiltro = e['id'] as int),
                   )),
             ]),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             etiqueta('Distancia máxima: ${_radioKm.round()} km'),
             Slider(
               value: _radioKm, min: 1, max: 50, divisions: 49,
               activeColor: Colores.rosa,
               onChanged: (v) => actualizar(() => _radioKm = v),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             BotonPrincipal(
               texto: 'Aplicar filtros',
               onPressed: () {
@@ -156,20 +157,20 @@ class _MatchScreenState extends State<MatchScreen> {
   Widget build(BuildContext context) {
     return Column(children: [
       Padding(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+        padding: EdgeInsets.fromLTRB(20, 8, 20, 0),
         child: Row(children: [
           Expanded(
             child: Text('Buscando amigos para ${widget.miMascota['nombre']}',
-                style: const TextStyle(color: Colors.white70)),
+                style: TextStyle(color: Colores.texto70)),
           ),
-          IconButton(icon: const Icon(Icons.tune, color: Colores.rosa), tooltip: 'Filtros', onPressed: _abrirFiltros),
-          IconButton(icon: const Icon(Icons.refresh, color: Colores.rosa), tooltip: 'Actualizar', onPressed: _buscar),
+          IconButton(icon: Icon(Icons.tune, color: Colores.rosa), tooltip: 'Filtros', onPressed: _abrirFiltros),
+          IconButton(icon: Icon(Icons.refresh, color: Colores.rosa), tooltip: 'Actualizar', onPressed: _buscar),
         ]),
       ),
       Expanded(child: _contenido()),
       if (_candidatos.isNotEmpty)
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          padding: EdgeInsets.symmetric(vertical: 16),
           child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
             _botonRedondo(Icons.close, Colors.redAccent, () => _votar('pass'), size: 60),
             _botonRedondo(Icons.star, Colors.blueAccent, () => _votar('superlike'), size: 50),
@@ -180,11 +181,11 @@ class _MatchScreenState extends State<MatchScreen> {
   }
 
   Widget _contenido() {
-    if (_cargando) return const Center(child: CircularProgressIndicator(color: Colores.rosa));
+    if (_cargando) return Center(child: CircularProgressIndicator(color: Colores.rosa));
     if (_candidatos.isEmpty) {
-      return const Center(
+      return Center(
         child: Text('¡No hay más mascotas cerca! 😢\nPrueba ampliando la distancia en los filtros.',
-            textAlign: TextAlign.center, style: TextStyle(color: Colors.white70, fontSize: 16)),
+            textAlign: TextAlign.center, style: TextStyle(color: Colores.texto70, fontSize: 16)),
       );
     }
     // Se dibujan 2 tarjetas: la de atrás y la de adelante (la única que se desliza)
@@ -216,8 +217,8 @@ class _MatchScreenState extends State<MatchScreen> {
       decoration: BoxDecoration(
         color: Colores.tarjeta,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: adelante ? Colores.rosa : Colors.white24, width: 2),
-        boxShadow: adelante ? [const BoxShadow(color: Colores.rosa, blurRadius: 15, spreadRadius: -5)] : [],
+        border: Border.all(color: adelante ? Colores.rosa : Colores.texto24, width: 2),
+        boxShadow: adelante ? [BoxShadow(color: Colores.rosa, blurRadius: 15, spreadRadius: -5)] : [],
         image: fotos.isNotEmpty ? DecorationImage(image: NetworkImage(fotos.first as String), fit: BoxFit.cover) : null,
       ),
       child: Container(
@@ -227,16 +228,16 @@ class _MatchScreenState extends State<MatchScreen> {
             begin: Alignment.bottomCenter,
             end: Alignment.topCenter,
             colors: [Colors.black.withOpacity(0.9), Colors.transparent],
-            stops: const [0.0, 0.5],
+            stops: [0.0, 0.5],
           ),
         ),
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.all(20),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           // Etiqueta de compatibilidad
           Align(
             alignment: Alignment.topRight,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: Colors.black54,
                 borderRadius: BorderRadius.circular(20),
@@ -245,52 +246,52 @@ class _MatchScreenState extends State<MatchScreen> {
               child: Text('$compat% compatible', style: TextStyle(color: colorCompat, fontWeight: FontWeight.bold)),
             ),
           ),
-          const Spacer(),
+          Spacer(),
           Text(m['nombre'] as String,
-              style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 5),
+              style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
+          SizedBox(height: 5),
           Row(children: [
-            const Icon(Icons.pets, color: Colores.rosa, size: 16),
-            const SizedBox(width: 5),
+            Icon(Icons.pets, color: Colores.rosa, size: 16),
+            SizedBox(width: 5),
             Text('${m['especie']}${m['raza'] != null ? ' · ${m['raza']}' : ''} · ${m['sexo']}',
-                style: const TextStyle(color: Colors.white70, fontSize: 16)),
+                style: TextStyle(color: Colors.white70, fontSize: 16)),
           ]),
           if (distancia != null) ...[
-            const SizedBox(height: 5),
+            SizedBox(height: 5),
             Row(children: [
-              const Icon(Icons.location_on, color: Colors.blueAccent, size: 16),
-              const SizedBox(width: 5),
-              Text('A $distancia km de ti', style: const TextStyle(color: Colors.white70, fontSize: 16)),
+              Icon(Icons.location_on, color: Colors.blueAccent, size: 16),
+              SizedBox(width: 5),
+              Text('A $distancia km de ti', style: TextStyle(color: Colors.white70, fontSize: 16)),
             ]),
           ],
           // Dueño verificado: foto, primer nombre y la foto de ambos juntos
           if (m['nombre_dueno'] != null) ...[
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             Row(children: [
               CircleAvatar(
                 radius: 14,
                 backgroundColor: Colores.rojo,
                 backgroundImage: m['foto_dueno'] != null ? NetworkImage(m['foto_dueno'] as String) : null,
               ),
-              const SizedBox(width: 8),
-              Text('${m['nombre_dueno']}', style: const TextStyle(color: Colors.white)),
-              const SizedBox(width: 6),
-              const Icon(Icons.verified, color: Colors.lightBlueAccent, size: 16),
-              const Text(' RUT verificado', style: TextStyle(color: Colors.white70, fontSize: 12)),
-              const Spacer(),
+              SizedBox(width: 8),
+              Text('${m['nombre_dueno']}', style: TextStyle(color: Colors.white)),
+              SizedBox(width: 6),
+              Icon(Icons.verified, color: Colors.lightBlueAccent, size: 16),
+              Text(' RUT verificado', style: TextStyle(color: Colors.white70, fontSize: 12)),
+              Spacer(),
               if (m['foto_con_dueno'] != null)
                 TextButton.icon(
                   style: TextButton.styleFrom(padding: EdgeInsets.zero, visualDensity: VisualDensity.compact),
                   onPressed: () => _verFotoJuntos(m),
-                  icon: const Icon(Icons.photo, color: Colores.rosa, size: 18),
-                  label: const Text('Juntos', style: TextStyle(color: Colores.rosa)),
+                  icon: Icon(Icons.photo, color: Colores.rosa, size: 18),
+                  label: Text('Juntos', style: TextStyle(color: Colores.rosa)),
                 ),
             ]),
           ],
           if ((m['descripcion'] ?? '').toString().isNotEmpty) ...[
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Text(m['descripcion'] as String,
-                maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white70)),
+                maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.white70)),
           ],
         ]),
       ),
@@ -304,11 +305,11 @@ class _MatchScreenState extends State<MatchScreen> {
         backgroundColor: Colores.tarjeta,
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             child: Image.network(m['foto_con_dueno'] as String, fit: BoxFit.cover),
           ),
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.all(12),
             child: Text('${m['nombre_dueno']} junto a ${m['nombre']} 🐾'),
           ),
         ]),

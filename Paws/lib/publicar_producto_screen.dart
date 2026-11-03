@@ -37,7 +37,7 @@ class _PublicarProductoScreenState extends State<PublicarProductoScreen> {
 
   Future<String> _subir(Uint8List bytes, String nombre) async {
     final ruta = '$miId/${nombre}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-    await supabase.storage.from('fotos').uploadBinary(ruta, bytes, fileOptions: const FileOptions(contentType: 'image/jpeg'));
+    await supabase.storage.from('fotos').uploadBinary(ruta, bytes, fileOptions: FileOptions(contentType: 'image/jpeg'));
     return supabase.storage.from('fotos').getPublicUrl(ruta);
   }
 
@@ -59,7 +59,7 @@ class _PublicarProductoScreenState extends State<PublicarProductoScreen> {
       return;
     }
     if (_esMedicamento) {
-      final minimo = DateTime.now().add(const Duration(days: 30));
+      final minimo = DateTime.now().add(Duration(days: 30));
       if (_vencimiento == null || _vencimiento!.isBefore(minimo)) {
         mostrarMensaje(context, 'El medicamento debe vencer en 30 días o más', error: true);
         return;
@@ -120,9 +120,9 @@ class _PublicarProductoScreenState extends State<PublicarProductoScreen> {
         child: foto != null
             ? null
             : Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                const Icon(Icons.add_a_photo, color: Colores.rosa, size: 30),
-                const SizedBox(height: 8),
-                Text(texto, style: const TextStyle(color: Colors.white70)),
+                Icon(Icons.add_a_photo, color: Colores.rosa, size: 30),
+                SizedBox(height: 8),
+                Text(texto, style: TextStyle(color: Colores.texto70)),
               ]),
       ),
     );
@@ -131,16 +131,16 @@ class _PublicarProductoScreenState extends State<PublicarProductoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(backgroundColor: Colores.fondo, title: const Text('Vender un producto')),
+      appBar: AppBar(backgroundColor: Colores.fondo, title: Text('Vender un producto')),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.all(20),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           etiqueta('Foto del producto'),
           _cajaFoto(_foto, 'Toca para agregar foto', () async {
             final f = await _elegirFoto();
             if (f != null) setState(() => _foto = f);
           }),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
 
           etiqueta('Categoría'),
           DropdownButtonFormField<String>(
@@ -156,15 +156,15 @@ class _PublicarProductoScreenState extends State<PublicarProductoScreen> {
 
           // Reglas especiales para medicamentos
           if (_esMedicamento) ...[
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: Colors.amber.withOpacity(0.1),
                 border: Border.all(color: Colors.amber),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Text(
+              child: Text(
                 '💊 Reglas para medicamentos:\n'
                 '• Solo productos de venta libre (sin receta).\n'
                 '• Envase original sellado y completo.\n'
@@ -174,11 +174,11 @@ class _PublicarProductoScreenState extends State<PublicarProductoScreen> {
               ),
             ),
           ],
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
 
           etiqueta('Título'),
           TextField(controller: _titulo, decoration: decoracionCampo('Ej: Cama ortopédica talla M')),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
 
           etiqueta('Estado'),
           Wrap(spacing: 8, children: [
@@ -190,7 +190,7 @@ class _PublicarProductoScreenState extends State<PublicarProductoScreen> {
                 onSelected: _esMedicamento && e != 'sellado' ? null : (_) => setState(() => _estado = e),
               ),
           ]),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
 
           Row(children: [
             Expanded(
@@ -199,7 +199,7 @@ class _PublicarProductoScreenState extends State<PublicarProductoScreen> {
                 TextField(controller: _precio, keyboardType: TextInputType.number, decoration: decoracionCampo('12000')),
               ]),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 etiqueta('Precio original'),
@@ -210,31 +210,31 @@ class _PublicarProductoScreenState extends State<PublicarProductoScreen> {
               ]),
             ),
           ]),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
 
           if (_esMedicamento || _categoria == 'Alimento') ...[
             etiqueta('Fecha de vencimiento${_esMedicamento ? '' : ' (opcional)'}'),
             OutlinedButton.icon(
               style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colores.morado), minimumSize: const Size(double.infinity, 50)),
+                  side: BorderSide(color: Colores.morado), minimumSize: Size(double.infinity, 50)),
               onPressed: () async {
                 final f = await showDatePicker(
                   context: context,
-                  initialDate: DateTime.now().add(const Duration(days: 60)),
+                  initialDate: DateTime.now().add(Duration(days: 60)),
                   firstDate: DateTime.now(),
-                  lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+                  lastDate: DateTime.now().add(Duration(days: 365 * 5)),
                 );
                 if (f != null) setState(() => _vencimiento = f);
               },
-              icon: const Icon(Icons.event, color: Colores.rosa),
+              icon: Icon(Icons.event, color: Colores.rosa),
               label: Text(
                 _vencimiento == null
                     ? 'Elegir fecha'
                     : '${_vencimiento!.day}/${_vencimiento!.month}/${_vencimiento!.year}',
-                style: const TextStyle(color: Colors.white),
+                style: TextStyle(color: Colores.texto),
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
           ],
 
           if (_esMedicamento) ...[
@@ -243,12 +243,12 @@ class _PublicarProductoScreenState extends State<PublicarProductoScreen> {
               final f = await _elegirFoto();
               if (f != null) setState(() => _fotoVencimiento = f);
             }),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
           ],
 
           etiqueta('Descripción'),
           TextField(controller: _descripcion, maxLines: 3, decoration: decoracionCampo('Detalles, talla, para qué mascota...')),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
 
           etiqueta('WhatsApp de contacto'),
           TextField(
@@ -256,10 +256,10 @@ class _PublicarProductoScreenState extends State<PublicarProductoScreen> {
             keyboardType: TextInputType.phone,
             decoration: decoracionCampo('Ej: 912345678', icono: Icons.phone),
           ),
-          const SizedBox(height: 30),
+          SizedBox(height: 30),
 
           BotonPrincipal(texto: 'Publicar', icono: Icons.storefront, cargando: _guardando, onPressed: _publicar),
-          const SizedBox(height: 40),
+          SizedBox(height: 40),
         ]),
       ),
     );

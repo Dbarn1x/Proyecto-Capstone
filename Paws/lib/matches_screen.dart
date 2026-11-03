@@ -49,21 +49,21 @@ class _MatchesScreenState extends State<MatchesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_cargando) return const Center(child: CircularProgressIndicator(color: Colores.rosa));
+    if (_cargando) return Center(child: CircularProgressIndicator(color: Colores.rosa));
 
     return RefreshIndicator(
       color: Colores.rosa,
       onRefresh: _cargar,
       child: _matches.isEmpty
-          ? ListView(children: const [
+          ? ListView(children: [
               SizedBox(height: 150),
               Text('Todavía no tienes matches 💔\nDa like en Descubrir y desliza hacia abajo para actualizar.',
-                  textAlign: TextAlign.center, style: TextStyle(color: Colors.white70, fontSize: 16)),
+                  textAlign: TextAlign.center, style: TextStyle(color: Colores.texto70, fontSize: 16)),
             ])
           : ListView.separated(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(16),
               itemCount: _matches.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
+              separatorBuilder: (_, __) => SizedBox(height: 10),
               itemBuilder: (_, i) {
                 final match = _matches[i];
                 final otra = _laOtra(match);
@@ -76,17 +76,17 @@ class _MatchesScreenState extends State<MatchesScreen> {
                     border: Border.all(color: Colores.morado),
                   ),
                   child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     leading: CircleAvatar(
                       radius: 28,
                       backgroundColor: Colores.fondo,
                       backgroundImage: fotos.isNotEmpty ? NetworkImage(fotos.first as String) : null,
-                      child: fotos.isEmpty ? const Icon(Icons.pets) : null,
+                      child: fotos.isEmpty ? Icon(Icons.pets) : null,
                     ),
-                    title: Text(otra['nombre'] as String, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    title: Text(otra['nombre'] as String, style: TextStyle(fontWeight: FontWeight.bold)),
                     subtitle: Text('Match del ${fecha.day}/${fecha.month}/${fecha.year}',
-                        style: const TextStyle(color: Colors.white54)),
-                    trailing: const Icon(Icons.chat_bubble, color: Colores.rosa),
+                        style: TextStyle(color: Colores.texto54)),
+                    trailing: Icon(Icons.chat_bubble, color: Colores.rosa),
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(
