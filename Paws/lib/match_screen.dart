@@ -1,195 +1,332 @@
 import 'package:flutter/material.dart';
-import 'map_screen.dart';
+import 'comun.dart';
 
+/// DESCUBRIR: tarjetas de mascotas cercanas ordenadas por compatibilidad
 class MatchScreen extends StatefulWidget {
-  const MatchScreen({super.key});
+  final Map<String, dynamic> miMascota;
+  const MatchScreen({super.key, required this.miMascota});
 
   @override
   State<MatchScreen> createState() => _MatchScreenState();
 }
 
 class _MatchScreenState extends State<MatchScreen> {
-  final List<Map<String, String>> _pets = [
-    {
-      'name': 'Max',
-      'breed': 'Golden Retriever',
-      'age': '2 años',
-      'distance': 'A 2 km de ti',
-      'image': 'https://images.unsplash.com/photo-1552053831-71594a27632d?q=80&w=800&auto=format&fit=crop'
-    },
-    {
-      'name': 'Luna',
-      'breed': 'Husky Siberiano',
-      'age': '1 año',
-      'distance': 'A 5 km de ti',
-      'image': 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?q=80&w=800&auto=format&fit=crop'
-    },
-    {
-      'name': 'Rocky',
-      'breed': 'Bulldog Francés',
-      'age': '3 años',
-      'distance': 'A 1 km de ti',
-      'image': 'https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?q=80&w=800&auto=format&fit=crop'
-    }
-  ];
+  List<Map<String, dynamic>> _candidatos = [];
+  List<Map<String, dynamic>> _especies = [];
+  int? _especieFiltro; // null = todas
+  double _radioKm = 15;
+  bool _cargando = true;
 
-  void _swipeCard() {
-    setState(() {
-      if (_pets.isNotEmpty) {
-        _pets.removeAt(0);
+  String get _miMascotaId => widget.miMascota['id'] as String;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarEspecies();
+    _buscar();
+  }
+
+  Future<void> _cargarEspecies() async {
+    final lista = await supabase.from('especies').select().order('id');
+    if (mounted) setState(() => _especies = lista);
+  }
+
+  /// Llama a la función buscar_candidatos de la base de datos (usa PostGIS)
+  Future<void> _buscar() async {
+    setState(() => _cargando = true);
+    try {
+      final resultado = await supabase.rpc('buscar_candidatos', params: {
+        'p_mascota': _miMascotaId,
+        'p_radio_km': _radioKm,
+        'p_especie': _especieFiltro,
+      });
+      _candidatos = List<Map<String, dynamic>>.from(resultado as List);
+    } catch (e) {
+      if (mounted) mostrarMensaje(context, 'Error al buscar: $e', error: true);
+    } finally {
+      if (mounted) setState(() => _cargando = false);
+    }
+  }
+
+  /// tipo = 'like', 'superlike' o 'pass'
+  Future<void> _votar(String tipo) async {
+    if (_candidatos.isEmpty) return;
+    final otra = _candidatos.first;
+    setState(() => _candidatos.removeAt(0));
+
+    try {
+      await supabase.from('likes').insert({
+        'origen_id': _miMascotaId,
+        'destino_id': otra['id'],
+        'tipo': tipo,
+      });
+
+      // Si fue like, el TRIGGER crear_match ya creó el match si era mutuo
+      if (tipo != 'pass') {
+        final a = _miMascotaId;
+        final b = otra['id'] as String;
+        final match = await supabase
+            .from('matches')
+            .select('id')
+            .or('and(mascota_a.eq.$a,mascota_b.eq.$b),and(mascota_a.eq.$b,mascota_b.eq.$a)')
+            .maybeSingle();
+        if (match != null && mounted) _mostrarMatch(otra);
       }
-    });
+    } catch (e) {
+      if (mounted) mostrarMensaje(context, 'No se pudo guardar: $e', error: true);
+    }
+  }
+
+  void _mostrarMatch(Map<String, dynamic> otra) {
+    final misFotos = widget.miMascota['fotos'] as List;
+    final susFotos = otra['fotos'] as List;
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: Colores.tarjeta,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: const BorderSide(color: Colores.rosa)),
+        title: const Text('¡Es un match! 🎉', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            _avatar(misFotos),
+            const Padding(padding: EdgeInsets.symmetric(horizontal: 10), child: Icon(Icons.favorite, color: Colores.rosa, size: 32)),
+            _avatar(susFotos),
+          ]),
+          const SizedBox(height: 15),
+          Text('${widget.miMascota['nombre']} y ${otra['nombre']} se gustaron. ¡Coordinen una salida en Mis matches!',
+              textAlign: TextAlign.center),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Seguir buscando', style: TextStyle(color: Colores.rosa))),
+        ],
+      ),
+    );
+  }
+
+  Widget _avatar(List fotos) => CircleAvatar(
+        radius: 38,
+        backgroundColor: Colores.fondo,
+        backgroundImage: fotos.isNotEmpty ? NetworkImage(fotos.first as String) : null,
+        child: fotos.isEmpty ? const Icon(Icons.pets) : null,
+      );
+
+  void _abrirFiltros() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colores.tarjeta,
+      builder: (_) => StatefulBuilder(
+        builder: (context, actualizar) => Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            etiqueta('Especie'),
+            Wrap(spacing: 8, children: [
+              ChoiceChip(
+                label: const Text('Todas'),
+                selected: _especieFiltro == null,
+                onSelected: (_) => actualizar(() => _especieFiltro = null),
+              ),
+              ..._especies.map((e) => ChoiceChip(
+                    label: Text(e['nombre'] as String),
+                    selected: _especieFiltro == e['id'],
+                    onSelected: (_) => actualizar(() => _especieFiltro = e['id'] as int),
+                  )),
+            ]),
+            const SizedBox(height: 16),
+            etiqueta('Distancia máxima: ${_radioKm.round()} km'),
+            Slider(
+              value: _radioKm, min: 1, max: 50, divisions: 49,
+              activeColor: Colores.rosa,
+              onChanged: (v) => actualizar(() => _radioKm = v),
+            ),
+            const SizedBox(height: 10),
+            BotonPrincipal(
+              texto: 'Aplicar filtros',
+              onPressed: () {
+                Navigator.pop(context);
+                _buscar();
+              },
+            ),
+          ]),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0F001A),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const Text('Descubrir', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 24)),
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.person, color: Colors.pinkAccent),
-          onPressed: () => Navigator.pop(context),
-        ),
+    return Column(children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+        child: Row(children: [
+          Expanded(
+            child: Text('Buscando amigos para ${widget.miMascota['nombre']}',
+                style: const TextStyle(color: Colors.white70)),
+          ),
+          IconButton(icon: const Icon(Icons.tune, color: Colores.rosa), tooltip: 'Filtros', onPressed: _abrirFiltros),
+          IconButton(icon: const Icon(Icons.refresh, color: Colores.rosa), tooltip: 'Actualizar', onPressed: _buscar),
+        ]),
       ),
-      body: _pets.isEmpty
-          ? const Center(
-              child: Text('¡No hay más perritos cerca! 😢\nVuelve más tarde.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white70, fontSize: 18)))
-          : Column(
-              children: [
-                const SizedBox(height: 10),
-                Expanded(
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: _pets.reversed.map((pet) {
-                      int index = _pets.indexOf(pet);
-                      bool isFront = index == 0;
+      Expanded(child: _contenido()),
+      if (_candidatos.isNotEmpty)
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+            _botonRedondo(Icons.close, Colors.redAccent, () => _votar('pass'), size: 60),
+            _botonRedondo(Icons.star, Colors.blueAccent, () => _votar('superlike'), size: 50),
+            _botonRedondo(Icons.favorite, Colors.greenAccent, () => _votar('like'), size: 60),
+          ]),
+        ),
+    ]);
+  }
 
-                      return Dismissible(
-                        key: Key(pet['name']!),
-                        onDismissed: (direction) => _swipeCard(),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 300),
-                          margin: EdgeInsets.only(
-                            top: isFront ? 0 : 20.0,
-                            bottom: isFront ? 0 : 20.0,
-                            left: isFront ? 20 : 30.0,
-                            right: isFront ? 20 : 30.0,
-                          ),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: isFront ? Colors.pinkAccent : Colors.white24, width: 2),
-                            boxShadow: isFront
-                                ? [const BoxShadow(color: Colors.pinkAccent, blurRadius: 15, spreadRadius: -5)]
-                                : [],
-                            image: DecorationImage(
-                              image: NetworkImage(pet['image']!),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(18),
-                              gradient: LinearGradient(
-                                begin: Alignment.bottomCenter,
-                                end: Alignment.topCenter,
-                                colors: [Colors.black.withOpacity(0.9), Colors.transparent],
-                                stops: const [0.0, 0.4],
-                              ),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(20.0),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Text(pet['name']!, style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
-                                      const SizedBox(width: 10),
-                                      Text(pet['age']!, style: const TextStyle(color: Colors.white70, fontSize: 22)),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 5),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.pets, color: Colors.pinkAccent, size: 16),
-                                      const SizedBox(width: 5),
-                                      Text(pet['breed']!, style: const TextStyle(color: Colors.white70, fontSize: 16)),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 5),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.location_on, color: Colors.blueAccent, size: 16),
-                                      const SizedBox(width: 5),
-                                      Text(pet['distance']!, style: const TextStyle(color: Colors.white70, fontSize: 16)),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildRoundButton(Icons.close, Colors.redAccent, _swipeCard, size: 60),
-                      _buildRoundButton(Icons.star, Colors.blueAccent, _swipeCard, size: 50),
-                      _buildRoundButton(Icons.favorite, Colors.greenAccent, _swipeCard, size: 60),
-                    ],
-                  ),
-                ),
-                // BOTÓN PARA EXPLORAR GPS EN TIEMPO REAL
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2A0025),
-                      side: const BorderSide(color: Colors.blueAccent, width: 2),
-                      minimumSize: const Size(double.infinity, 55),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                      shadowColor: Colors.blueAccent.withOpacity(0.5),
-                      elevation: 10,
-                    ),
-                    onPressed: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => const MapScreen()));
-                    },
-                    icon: const Icon(Icons.location_on, color: Colors.blueAccent, size: 24),
-                    label: const Text('Explorar GPS en tiempo real', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                  ),
-                ),
-                const SizedBox(height: 20),
-              ],
-            ),
+  Widget _contenido() {
+    if (_cargando) return const Center(child: CircularProgressIndicator(color: Colores.rosa));
+    if (_candidatos.isEmpty) {
+      return const Center(
+        child: Text('¡No hay más mascotas cerca! 😢\nPrueba ampliando la distancia en los filtros.',
+            textAlign: TextAlign.center, style: TextStyle(color: Colors.white70, fontSize: 16)),
+      );
+    }
+    // Se dibujan 2 tarjetas: la de atrás y la de adelante (la única que se desliza)
+    final visibles = _candidatos.take(2).toList().reversed.toList();
+    return Stack(
+      fit: StackFit.expand, // las tarjetas ocupan todo el espacio disponible
+      children: visibles.map((m) {
+        final esLaPrimera = identical(m, _candidatos.first);
+        final tarjeta = _tarjeta(m, esLaPrimera);
+        if (!esLaPrimera) return tarjeta;
+        return Dismissible(
+          key: ValueKey(m['id']),
+          // Deslizar a la derecha = like, a la izquierda = pass
+          onDismissed: (dir) => _votar(dir == DismissDirection.startToEnd ? 'like' : 'pass'),
+          child: tarjeta,
+        );
+      }).toList(),
     );
   }
 
-  Widget _buildRoundButton(IconData icon, Color color, VoidCallback onPressed, {double size = 60}) {
+  Widget _tarjeta(Map<String, dynamic> m, bool adelante) {
+    final fotos = m['fotos'] as List;
+    final compat = m['compatibilidad'] as int;
+    final colorCompat = compat >= 75 ? Colors.greenAccent : (compat >= 50 ? Colors.amber : Colors.redAccent);
+    final distancia = m['distancia_km'];
+
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: adelante ? 20 : 30, vertical: adelante ? 0 : 15),
+      decoration: BoxDecoration(
+        color: Colores.tarjeta,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: adelante ? Colores.rosa : Colors.white24, width: 2),
+        boxShadow: adelante ? [const BoxShadow(color: Colores.rosa, blurRadius: 15, spreadRadius: -5)] : [],
+        image: fotos.isNotEmpty ? DecorationImage(image: NetworkImage(fotos.first as String), fit: BoxFit.cover) : null,
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          gradient: LinearGradient(
+            begin: Alignment.bottomCenter,
+            end: Alignment.topCenter,
+            colors: [Colors.black.withOpacity(0.9), Colors.transparent],
+            stops: const [0.0, 0.5],
+          ),
+        ),
+        padding: const EdgeInsets.all(20),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          // Etiqueta de compatibilidad
+          Align(
+            alignment: Alignment.topRight,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.black54,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: colorCompat, width: 2),
+              ),
+              child: Text('$compat% compatible', style: TextStyle(color: colorCompat, fontWeight: FontWeight.bold)),
+            ),
+          ),
+          const Spacer(),
+          Text(m['nombre'] as String,
+              style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 5),
+          Row(children: [
+            const Icon(Icons.pets, color: Colores.rosa, size: 16),
+            const SizedBox(width: 5),
+            Text('${m['especie']}${m['raza'] != null ? ' · ${m['raza']}' : ''} · ${m['sexo']}',
+                style: const TextStyle(color: Colors.white70, fontSize: 16)),
+          ]),
+          if (distancia != null) ...[
+            const SizedBox(height: 5),
+            Row(children: [
+              const Icon(Icons.location_on, color: Colors.blueAccent, size: 16),
+              const SizedBox(width: 5),
+              Text('A $distancia km de ti', style: const TextStyle(color: Colors.white70, fontSize: 16)),
+            ]),
+          ],
+          // Dueño verificado: foto, primer nombre y la foto de ambos juntos
+          if (m['nombre_dueno'] != null) ...[
+            const SizedBox(height: 10),
+            Row(children: [
+              CircleAvatar(
+                radius: 14,
+                backgroundColor: Colores.rojo,
+                backgroundImage: m['foto_dueno'] != null ? NetworkImage(m['foto_dueno'] as String) : null,
+              ),
+              const SizedBox(width: 8),
+              Text('${m['nombre_dueno']}', style: const TextStyle(color: Colors.white)),
+              const SizedBox(width: 6),
+              const Icon(Icons.verified, color: Colors.lightBlueAccent, size: 16),
+              const Text(' RUT verificado', style: TextStyle(color: Colors.white70, fontSize: 12)),
+              const Spacer(),
+              if (m['foto_con_dueno'] != null)
+                TextButton.icon(
+                  style: TextButton.styleFrom(padding: EdgeInsets.zero, visualDensity: VisualDensity.compact),
+                  onPressed: () => _verFotoJuntos(m),
+                  icon: const Icon(Icons.photo, color: Colores.rosa, size: 18),
+                  label: const Text('Juntos', style: TextStyle(color: Colores.rosa)),
+                ),
+            ]),
+          ],
+          if ((m['descripcion'] ?? '').toString().isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(m['descripcion'] as String,
+                maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white70)),
+          ],
+        ]),
+      ),
+    );
+  }
+
+  void _verFotoJuntos(Map<String, dynamic> m) {
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        backgroundColor: Colores.tarjeta,
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            child: Image.network(m['foto_con_dueno'] as String, fit: BoxFit.cover),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Text('${m['nombre_dueno']} junto a ${m['nombre']} 🐾'),
+          ),
+        ]),
+      ),
+    );
+  }
+
+  Widget _botonRedondo(IconData icono, Color color, VoidCallback onPressed, {double size = 60}) {
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: const Color(0xFF1A0025),
+        color: Colores.tarjeta,
         border: Border.all(color: color, width: 2),
         boxShadow: [BoxShadow(color: color.withOpacity(0.3), blurRadius: 10, spreadRadius: 2)],
       ),
-      child: IconButton(
-        icon: Icon(icon, color: color, size: size * 0.5),
-        onPressed: onPressed,
-      ),
+      child: IconButton(icon: Icon(icono, color: color, size: size * 0.5), onPressed: onPressed),
     );
   }
 }

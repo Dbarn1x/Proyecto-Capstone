@@ -9,10 +9,14 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  supabase_flutter: ^2.0.0
-  flutter_map: ^6.0.1
-  latlong2: ^0.9.0
-  cupertino_icons: ^1.0.2
+  supabase_flutter: ^2.8.0     # base de datos, login y fotos
+  flutter_map: ^6.1.0          # mapa (OpenStreetMap)
+  latlong2: ^0.9.0             # coordenadas para el mapa
+  geolocator: ^13.0.1          # GPS del celular
+  image_picker: ^1.1.2         # elegir fotos de la galería
+  url_launcher: ^6.3.0         # abrir WhatsApp y Google Maps
+  http: ^1.2.2                 # consultar veterinarias en OpenStreetMap
+  cupertino_icons: ^1.0.8
 
 dev_dependencies:
   flutter_test:

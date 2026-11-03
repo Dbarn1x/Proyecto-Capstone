@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'comun.dart';
 import 'register_screen.dart';
-import 'match_screen.dart';
+import 'login_screen.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -10,11 +11,7 @@ class WelcomeScreen extends StatelessWidget {
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF2A0025), Color(0xFF0F001A), Color(0xFF350020)],
-          ),
+          gradient: Colores.degradado,
         ),
         child: SafeArea(
           child: Column(
@@ -24,13 +21,13 @@ class WelcomeScreen extends StatelessWidget {
                 margin: const EdgeInsets.only(top: 20),
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.pinkAccent),
+                  border: Border.all(color: Colores.rosa),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.pets, color: Colors.pinkAccent, size: 18),
+                    Icon(Icons.pets, color: Colores.rosa, size: 18),
                     SizedBox(width: 8),
                     Text('¡MatchPet Social!', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                   ],
@@ -42,8 +39,8 @@ class WelcomeScreen extends StatelessWidget {
                 height: 250,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.pinkAccent, width: 2),
-                  boxShadow: const [BoxShadow(color: Colors.pinkAccent, blurRadius: 20, spreadRadius: -5)],
+                  border: Border.all(color: Colores.rosa, width: 2),
+                  boxShadow: const [BoxShadow(color: Colores.rosa, blurRadius: 20, spreadRadius: -5)],
                   image: const DecorationImage(
                     image: NetworkImage('https://images.unsplash.com/photo-1543466835-00a7907e9de1?q=80&w=1000&auto=format&fit=crop'),
                     fit: BoxFit.cover,
@@ -69,14 +66,14 @@ class WelcomeScreen extends StatelessWidget {
               const SizedBox(height: 15),
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 30),
-                child: Text('Conecta con otros perritos para jugar, salir a pasear o encontrar la pareja ideal.', textAlign: TextAlign.center, style: TextStyle(color: Colors.white70, fontSize: 14)),
+                child: Text('Conecta con otras mascotas para jugar, salir a pasear y encontrar amigos fijos.', textAlign: TextAlign.center, style: TextStyle(color: Colors.white70, fontSize: 14)),
               ),
               const Spacer(),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Container(
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(colors: [Color(0xFFD50032), Color(0xFF8A2BE2)]),
+                    gradient: const LinearGradient(colors: [Colores.rojo, Colores.morado]),
                     borderRadius: BorderRadius.circular(15),
                   ),
                   child: ElevatedButton(
@@ -107,11 +104,10 @@ class WelcomeScreen extends StatelessWidget {
                     side: const BorderSide(color: Colors.white30),
                     minimumSize: const Size(double.infinity, 55),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                    backgroundColor: const Color(0xFF150020),
+                    backgroundColor: Colores.fondo.withOpacity(0.6),
                   ),
                   onPressed: () {
-                    // Ahora el botón lleva al MatchScreen en lugar de no hacer nada
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => const MatchScreen()));
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => const LoginScreen()));
                   },
                   child: const Text('Ya tengo una cuenta', style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
                 ),

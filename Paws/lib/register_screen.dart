@@ -1,125 +1,152 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'comun.dart';
+import 'rut.dart';
 import 'pet_profile_setup_screen.dart';
+import 'login_screen.dart';
+import 'nueva_clave_screen.dart' show validarClave;
 
-class RegisterScreen extends StatelessWidget {
+class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
+
+  @override
+  State<RegisterScreen> createState() => _RegisterScreenState();
+}
+
+class _RegisterScreenState extends State<RegisterScreen> {
+  final _form = GlobalKey<FormState>();
+  final _nombre = TextEditingController();
+  final _rut = TextEditingController();
+  final _correo = TextEditingController();
+  final _clave = TextEditingController();
+  final _confirmar = TextEditingController();
+  bool _cargando = false;
+  bool _verClave = false;
+
+  Future<void> _registrar() async {
+    // 1. Validaciones en la app (formato, dígito verificador del RUT, etc.)
+    if (!_form.currentState!.validate()) return;
+    setState(() => _cargando = true);
+
+    try {
+      // 2. Crear la cuenta en Supabase Auth. El nombre y el RUT viajan como
+      //    "metadata" y el TRIGGER crear_perfil los guarda en la tabla perfiles.
+      final respuesta = await supabase.auth.signUp(
+        email: _correo.text.trim(),
+        password: _clave.text,
+        data: {'nombre': _nombre.text.trim(), 'rut': normalizarRut(_rut.text)},
+      );
+      if (!mounted) return;
+
+      if (respuesta.session != null) {
+        // Sesión iniciada: pasamos a crear el perfil de la mascota
+        Navigator.pushAndRemoveUntil(
+            context, MaterialPageRoute(builder: (_) => const PetProfileSetupScreen()), (_) => false);
+      } else {
+        // Supabase tiene activada la confirmación por correo
+        mostrarMensaje(context, 'Te enviamos un correo para confirmar tu cuenta. Luego inicia sesión.');
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+      }
+    } on AuthException catch (e) {
+      String texto = e.message;
+      // Si el trigger falla (RUT repetido) Supabase responde "Database error saving new user"
+      if (texto.contains('Database error')) texto = 'Este RUT ya está registrado';
+      if (texto.contains('already registered')) texto = 'Este correo ya está registrado';
+      if (texto.contains('Password should')) texto = 'La contraseña no cumple los requisitos de seguridad';
+      if (mounted) mostrarMensaje(context, texto, error: true);
+    } catch (e) {
+      if (mounted) mostrarMensaje(context, 'No se pudo conectar. Revisa tu internet.', error: true);
+    } finally {
+      if (mounted) setState(() => _cargando = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F001A),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.pinkAccent)),
-            child: const Icon(Icons.arrow_back, color: Colors.white, size: 18),
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
+      appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Row(
-              children: [
+        child: Form(
+          key: _form,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(children: [
                 Text('Crear Cuenta ', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
                 Icon(Icons.pets, color: Colors.blueAccent),
-              ],
-            ),
-            const SizedBox(height: 10),
-            const Text('¡Estás a un paso de encontrarle mejores amigos a tu peludo!', style: TextStyle(color: Colors.white70, fontSize: 14)),
-            const SizedBox(height: 20),
-            // Alerta de seguridad y RUT restaurada
-            Container(
-              padding: const EdgeInsets.all(15),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1A0025),
-                border: Border.all(color: Colors.pinkAccent),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.security, color: Colors.pinkAccent),
+              ]),
+              const SizedBox(height: 10),
+              const Text('¡Estás a un paso de encontrarle mejores amigos a tu peludo!',
+                  style: TextStyle(color: Colors.white70, fontSize: 14)),
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(15),
+                decoration: BoxDecoration(
+                  color: Colores.tarjeta,
+                  border: Border.all(color: Colores.rosa),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Row(children: [
+                  Icon(Icons.security, color: Colores.rosa),
                   SizedBox(width: 10),
                   Expanded(
-                    child: Text('Registro seguro: Solicitamos tu RUT para verificar tu identidad y prevenir el robo de mascotas.', style: TextStyle(color: Colors.white, fontSize: 12)),
+                    child: Text(
+                        'Registro seguro: solicitamos tu RUT para verificar tu identidad y prevenir el robo de mascotas. Solo tú puedes verlo.',
+                        style: TextStyle(color: Colors.white, fontSize: 12)),
                   ),
-                ],
+                ]),
               ),
-            ),
-            const SizedBox(height: 25),
-            _buildTextField('Tu Nombre Completo', 'Ej: Camila Soto', Icons.person_outline),
-            // Campo de RUT agregado
-            _buildTextField('RUT del Dueño', 'Ej: 12.345.678-K', Icons.badge_outlined),
-            _buildTextField('Nombre de tu Mascota', 'Ej: Toby / Luna', Icons.pets),
-            _buildTextField('Correo Electrónico', 'ejemplo@correo.com', Icons.email_outlined),
-            _buildTextField('Contraseña', '••••••••', Icons.lock_outline, isPassword: true),
-            const SizedBox(height: 30),
-            Container(
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [Color(0xFFD50032), Color(0xFF8A2BE2)]),
-                borderRadius: BorderRadius.circular(15),
+              const SizedBox(height: 25),
+              etiqueta('Tu nombre completo'),
+              TextFormField(
+                controller: _nombre,
+                decoration: decoracionCampo('Ej: Camila Soto', icono: Icons.person_outline),
+                validator: (v) => (v == null || v.trim().length < 3) ? 'Escribe tu nombre' : null,
               ),
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  shadowColor: Colors.transparent,
-                  minimumSize: const Size(double.infinity, 55),
-                ),
-                onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const PetProfileSetupScreen()));
-                },
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text('Registrarme con Seguridad', style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
-                    SizedBox(width: 10),
-                    Icon(Icons.arrow_forward, color: Colors.white, size: 20),
-                  ],
-                ),
+              const SizedBox(height: 16),
+              etiqueta('RUT'),
+              TextFormField(
+                controller: _rut,
+                decoration: decoracionCampo('Ej: 12.345.678-5', icono: Icons.badge_outlined),
+                validator: (v) => rutValido(v ?? '') ? null : 'RUT inválido',
               ),
-            ),
-            const SizedBox(height: 40),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTextField(String label, String hint, IconData icon, {bool isPassword = false}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-          const SizedBox(height: 8),
-          TextField(
-            obscureText: isPassword,
-            style: const TextStyle(color: Colors.white),
-            decoration: InputDecoration(
-              hintText: hint,
-              hintStyle: const TextStyle(color: Colors.white30),
-              prefixIcon: Icon(icon, color: Colors.pinkAccent),
-              suffixIcon: isPassword ? const Icon(Icons.visibility_off, color: Colors.white30) : null,
-              filled: true,
-              fillColor: const Color(0xFF150020),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFF8A2BE2)),
+              const SizedBox(height: 16),
+              etiqueta('Correo electrónico'),
+              TextFormField(
+                controller: _correo,
+                keyboardType: TextInputType.emailAddress,
+                decoration: decoracionCampo('ejemplo@correo.com', icono: Icons.email_outlined),
+                validator: (v) => (v != null && v.contains('@') && v.contains('.')) ? null : 'Correo inválido',
               ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Colors.pinkAccent, width: 2),
+              const SizedBox(height: 16),
+              etiqueta('Contraseña'),
+              TextFormField(
+                controller: _clave,
+                obscureText: !_verClave,
+                decoration: decoracionCampo('Mínimo 12 caracteres, con letras y números',
+                    icono: Icons.lock_outline,
+                    sufijo: IconButton(
+                      icon: Icon(_verClave ? Icons.visibility : Icons.visibility_off, color: Colors.white30),
+                      onPressed: () => setState(() => _verClave = !_verClave),
+                    )),
+                validator: validarClave,
               ),
-            ),
+              const SizedBox(height: 16),
+              etiqueta('Confirmar contraseña'),
+              TextFormField(
+                controller: _confirmar,
+                obscureText: !_verClave,
+                decoration: decoracionCampo('Repite la contraseña', icono: Icons.lock_outline),
+                validator: (v) => v == _clave.text ? null : 'Las contraseñas no coinciden',
+              ),
+              const SizedBox(height: 30),
+              BotonPrincipal(
+                  texto: 'Registrarme con Seguridad', icono: Icons.arrow_forward, cargando: _cargando, onPressed: _registrar),
+              const SizedBox(height: 40),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
