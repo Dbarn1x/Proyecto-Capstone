@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'comun.dart';
 import 'publicar_producto_screen.dart';
+import 'pago_transbank.dart';
 
 /// Categorías (deben coincidir con el CHECK de la tabla productos)
 const categoriasProducto = [
@@ -241,6 +242,11 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
             Text(p['descripcion'] as String, style: TextStyle(color: Colores.texto70)),
           ],
           SizedBox(height: 20),
+          // Comprar con Webpay (Transbank). Paws cobra 5 % de comisión.
+          if (!esMio) ...[
+            BotonPagarWebpay(producto: p, alTerminar: () { Navigator.pop(context); _cargar(); }),
+            SizedBox(height: 8),
+          ],
           if (esMio) ...[
             BotonPrincipal(texto: 'Marcar como vendido', icono: Icons.check_circle, onPressed: marcarVendido),
             SizedBox(height: 8),
