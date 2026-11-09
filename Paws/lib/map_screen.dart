@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'comun.dart';
 import 'ubicacion.dart';
 import 'veterinarias_osm.dart';
+import 'clima_paseo.dart';
 
 /// MAPA con 3 modos: Juntas (eventos), Veterinarias y Paseos (zonas)
 class MapScreen extends StatefulWidget {
@@ -631,6 +632,9 @@ class _MapScreenState extends State<MapScreen> {
                   style: TextStyle(fontSize: 11)),
             ),
           ),
+        // Clima para pasear (API Open-Meteo)
+        if (_modo == Modo.paseos)
+          Positioned(top: 80, left: 10, right: 10, child: ClimaPaseo(punto: _yo)),
         if (_eligiendoPunto)
           Positioned(
             bottom: 90,
