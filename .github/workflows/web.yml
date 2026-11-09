@@ -1,0 +1,35 @@
+name: Publicar web
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Paws
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - run: flutter build web --release --base-href /Proyecto-Capstone/
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: Paws/build/web
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+    steps:
+      - uses: actions/deploy-pages@v4
